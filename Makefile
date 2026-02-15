@@ -1,6 +1,9 @@
 .PHONY: start stop restart build test lint format logs clean \
        test-local lint-fix format-check ci coverage security \
-       minikube-start minikube-build k8s-apply k8s-delete k8s-status k8s-logs
+       minikube-start minikube-build k8s-apply k8s-delete k8s-status k8s-logs \
+       monitoring-apply monitoring-delete monitoring-status \
+       tls-generate traefik-apply traefik-delete \
+       deploy-all destroy-all
 
 # ─────────────────────────────────────────────
 # Docker Compose (local development)
@@ -63,8 +66,7 @@ minikube-start:
 	minikube status || minikube start
 
 minikube-build:
-	@echo "Building Docker image inside Minikube..."
-	eval $$(minikube docker-env) && docker build -t collector-api:latest .
+	minikube image build -t collector-api:latest .
 
 k8s-apply:
 	kubectl apply -f k8s/namespace.yml
@@ -86,5 +88,73 @@ k8s-status:
 k8s-logs:
 	kubectl logs -n collector -l app=collector-api --tail=100 -f
 
-k8s-url:
-	minikube service collector-api -n collector --url
+# ─────────────────────────────────────────────
+# TLS — Self-signed certificate (dev/Minikube)
+# ─────────────────────────────────────────────
+tls-generate:
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout k8s/tls.key -out k8s/tls.crt \
+		-subj "/CN=collector.local" \
+		-addext "subjectAltName=DNS:collector.local,DNS:grafana.collector.local,DNS:prometheus.collector.local"
+	kubectl create secret tls collector-tls \
+		--cert=k8s/tls.crt --key=k8s/tls.key \
+		-n collector --dry-run=client -o yaml | kubectl apply -f -
+	@echo TLS certificate created and applied.
+
+# ─────────────────────────────────────────────
+# Traefik Ingress Controller
+# ─────────────────────────────────────────────
+traefik-apply:
+	kubectl apply -f k8s/traefik.yml
+	kubectl apply -f k8s/ingress.yml
+
+traefik-delete:
+	kubectl delete -f k8s/ingress.yml --ignore-not-found
+	kubectl delete -f k8s/traefik.yml --ignore-not-found
+
+# ─────────────────────────────────────────────
+# Monitoring (Prometheus + Grafana)
+# ─────────────────────────────────────────────
+monitoring-apply:
+	kubectl apply -f k8s/prometheus.yml
+	kubectl apply -f k8s/grafana.yml
+
+monitoring-delete:
+	kubectl delete -f k8s/grafana.yml --ignore-not-found
+	kubectl delete -f k8s/prometheus.yml --ignore-not-found
+
+monitoring-status:
+	kubectl get pods -n collector
+	kubectl get svc -n collector
+
+# ─────────────────────────────────────────────
+# Full deploy (app + monitoring + ingress)
+# ─────────────────────────────────────────────
+k8s-start: minikube-start minikube-build k8s-apply monitoring-apply tls-generate traefik-apply
+	@echo ──────────────────────────────────────
+	@echo Deployment complete. Waiting for pods...
+	@echo ──────────────────────────────────────
+	kubectl wait --for=condition=ready pod -l app=postgres -n collector --timeout=60s
+	kubectl wait --for=condition=ready pod -l app=collector-api -n collector --timeout=60s
+	kubectl get all -n collector
+	@echo ──────────────────────────────────────
+	@echo Access via:
+	@echo   API:        https://collector.local
+	@echo   Grafana:    https://grafana.collector.local
+	@echo   Prometheus: https://prometheus.collector.local
+	@echo   Traefik:    http://localhost:30088
+	@echo ──────────────────────────────────────
+
+deploy-all: k8s-apply monitoring-apply tls-generate traefik-apply
+
+destroy-all:
+	kubectl delete -f k8s/ingress.yml --ignore-not-found
+	kubectl delete -f k8s/traefik.yml --ignore-not-found
+	kubectl delete -f k8s/grafana.yml --ignore-not-found
+	kubectl delete -f k8s/prometheus.yml --ignore-not-found
+	kubectl delete -f k8s/app.yml --ignore-not-found
+	kubectl delete -f k8s/postgres.yml --ignore-not-found
+	kubectl delete -f k8s/secret.yml --ignore-not-found
+	kubectl delete -f k8s/configmap.yml --ignore-not-found
+	kubectl delete -f k8s/namespace.yml --ignore-not-found
+	@echo All resources deleted.

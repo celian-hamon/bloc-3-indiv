@@ -62,10 +62,9 @@ metadata:
   name: collector-api
   namespace: collector
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: collector-api
   ports:
     - port: 8000
       targetPort: 8000
-      nodePort: 30080
