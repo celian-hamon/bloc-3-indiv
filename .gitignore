@@ -1,4 +1,4 @@
 .pytest_cache
 .ruff_cache
 guidelines/
-.env.example
+.env
