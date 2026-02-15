@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector-api
+  namespace: collector
+  labels:
+    app: collector-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: collector-api
+  template:
+    metadata:
+      labels:
+        app: collector-api
+    spec:
+      containers:
+        - name: collector-api
+          image: collector-api:latest
+          imagePullPolicy: Never  # Use local Minikube image
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: collector-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: collector-secret
+                  key: POSTGRES_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: collector-secret
+                  key: SECRET_KEY
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector-api
+  namespace: collector
+spec:
+  type: NodePort
+  selector:
+    app: collector-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30080

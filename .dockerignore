@@ -1,0 +1,17 @@
+.git
+.github
+.ruff_cache
+__pycache__
+*.pyc
+*.pyo
+tests/
+guidelines/
+*.md
+!requirements.txt
+.env
+.env.*
+k8s/
+docker-compose.yml
+Makefile
+coverage.xml
+.coverage
