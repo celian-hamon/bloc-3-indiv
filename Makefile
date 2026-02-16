@@ -3,7 +3,8 @@
        minikube-start minikube-build k8s-apply k8s-delete k8s-status k8s-logs \
        monitoring-apply monitoring-delete monitoring-status \
        tls-generate traefik-apply traefik-delete \
-       deploy-all destroy-all
+       deploy-all destroy-all \
+       load-test load-test-gui load-test-clean
 
 # ─────────────────────────────────────────────
 # Docker Compose (local development)
@@ -158,3 +159,21 @@ destroy-all:
 	kubectl delete -f k8s/configmap.yml --ignore-not-found
 	kubectl delete -f k8s/namespace.yml --ignore-not-found
 	@echo All resources deleted.
+
+# ─────────────────────────────────────────────
+# Load Testing (JMeter)
+# ─────────────────────────────────────────────
+load-test:
+	@if exist jmeter\report rmdir /s /q jmeter\report
+	jmeter -n -t jmeter/collector-load-test.jmx -l jmeter/results.jtl -e -o jmeter/report/
+	@echo ──────────────────────────────────────
+	@echo Load test complete. Open jmeter/report/index.html for results.
+	@echo ──────────────────────────────────────
+
+load-test-gui:
+	jmeter -t jmeter/collector-load-test.jmx
+
+load-test-clean:
+	@if exist jmeter\results.jtl del jmeter\results.jtl
+	@if exist jmeter\report rmdir /s /q jmeter\report
+	@echo JMeter results cleaned.

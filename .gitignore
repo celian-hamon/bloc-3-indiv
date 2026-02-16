@@ -2,3 +2,5 @@
 .ruff_cache
 guidelines/
 .env
+jmeter/results.jtl
+jmeter/report/
