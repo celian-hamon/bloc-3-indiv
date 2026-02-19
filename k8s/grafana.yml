@@ -15,6 +15,26 @@ data:
         editable: true
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provisioning
+  namespace: collector
+data:
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: "default"
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,6 +67,10 @@ spec:
           volumeMounts:
             - name: grafana-datasources
               mountPath: /etc/grafana/provisioning/datasources
+            - name: grafana-dashboard-provisioning
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: grafana-dashboards
+              mountPath: /var/lib/grafana/dashboards
           resources:
             requests:
               memory: "128Mi"
@@ -64,6 +88,12 @@ spec:
         - name: grafana-datasources
           configMap:
             name: grafana-datasources
+        - name: grafana-dashboard-provisioning
+          configMap:
+            name: grafana-dashboard-provisioning
+        - name: grafana-dashboards
+          configMap:
+            name: grafana-dashboards
 
 ---
 apiVersion: v1

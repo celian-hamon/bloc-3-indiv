@@ -1,0 +1,237 @@
+# ══════════════════════════════════════════════
+# Makefile.win — Windows-native Makefile
+# Usage:  make -f Makefile.win <target>
+#   or:   rename to Makefile and use: make <target>
+# Requires: GNU Make for Windows (e.g. via choco install make)
+# ══════════════════════════════════════════════
+
+SHELL = cmd.exe
+
+.PHONY: start stop restart build test lint format logs clean \
+        test-local lint-fix format-check ci coverage security \
+        minikube-start minikube-build k8s-apply k8s-delete k8s-status k8s-logs \
+        monitoring-apply monitoring-delete monitoring-status \
+        tls-generate traefik-apply traefik-delete \
+        deploy-all destroy-all k8s-start \
+        load-test load-test-gui load-test-clean \
+        help
+
+# ─────────────────────────────────────────────
+# Docker Compose (local development)
+# ─────────────────────────────────────────────
+start:
+	docker compose up -d --build
+
+stop:
+	docker compose down
+
+restart:
+	docker compose down
+	docker compose up -d --build
+
+build:
+	docker compose build
+
+logs:
+	docker compose logs -f
+
+clean:
+	docker compose down -v
+
+# ─────────────────────────────────────────────
+# Test & Quality
+# ─────────────────────────────────────────────
+test:
+	docker compose exec web pytest tests/ -v
+
+test-local:
+	pytest tests/ -v
+
+coverage:
+	pytest tests/ -v --cov=app --cov-report=term-missing
+
+lint:
+	python -m ruff check app/ tests/
+
+lint-fix:
+	python -m ruff check app/ tests/ --fix
+
+format:
+	python -m ruff format app/ tests/
+
+format-check:
+	python -m ruff format --check app/ tests/
+
+security:
+	pip-audit -r requirements.txt
+
+# ─────────────────────────────────────────────
+# All checks (mirrors CI pipeline)
+# ─────────────────────────────────────────────
+ci: lint format-check security test-local
+
+# ─────────────────────────────────────────────
+# Minikube / Kubernetes
+# ─────────────────────────────────────────────
+minikube-start:
+	cmd /c "minikube status || minikube start"
+
+minikube-build:
+	minikube image build -t collector-api:latest .
+
+k8s-apply:
+	kubectl apply -f k8s/namespace.yml
+	kubectl apply -f k8s/configmap.yml
+	kubectl apply -f k8s/secret.yml
+	kubectl apply -f k8s/postgres.yml
+	kubectl apply -f k8s/app.yml
+
+k8s-delete:
+	kubectl delete -f k8s/app.yml --ignore-not-found
+	kubectl delete -f k8s/postgres.yml --ignore-not-found
+	kubectl delete -f k8s/secret.yml --ignore-not-found
+	kubectl delete -f k8s/configmap.yml --ignore-not-found
+	kubectl delete -f k8s/namespace.yml --ignore-not-found
+
+k8s-status:
+	kubectl get all -n collector
+
+k8s-logs:
+	kubectl logs -n collector -l app=collector-api --tail=100 -f
+
+# ─────────────────────────────────────────────
+# TLS — Self-signed certificate (dev/Minikube)
+# ─────────────────────────────────────────────
+tls-generate:
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout k8s\tls.key -out k8s\tls.crt -subj "/CN=collector.local" -addext "subjectAltName=DNS:collector.local,DNS:grafana.collector.local,DNS:prometheus.collector.local"
+	cmd /c "kubectl create secret tls collector-tls --cert=k8s\tls.crt --key=k8s\tls.key -n collector --dry-run=client -o yaml | kubectl apply -f -"
+	@echo TLS certificate created and applied.
+
+# ─────────────────────────────────────────────
+# Traefik Ingress Controller
+# ─────────────────────────────────────────────
+traefik-apply:
+	kubectl apply -f k8s/traefik.yml
+	kubectl apply -f k8s/ingress.yml
+
+traefik-delete:
+	kubectl delete -f k8s/ingress.yml --ignore-not-found
+	kubectl delete -f k8s/traefik.yml --ignore-not-found
+
+# ─────────────────────────────────────────────
+# Monitoring (Prometheus + Grafana)
+# ─────────────────────────────────────────────
+monitoring-apply:
+	kubectl apply -f k8s/prometheus.yml
+	kubectl apply -f k8s/grafana.yml
+
+monitoring-delete:
+	kubectl delete -f k8s/grafana.yml --ignore-not-found
+	kubectl delete -f k8s/prometheus.yml --ignore-not-found
+
+monitoring-status:
+	kubectl get pods -n collector
+	kubectl get svc -n collector
+
+# ─────────────────────────────────────────────
+# Full deploy (app + monitoring + ingress)
+# ─────────────────────────────────────────────
+k8s-start: minikube-start minikube-build k8s-apply monitoring-apply tls-generate traefik-apply
+	@echo ──────────────────────────────────────
+	@echo Deployment complete. Waiting for pods...
+	@echo ──────────────────────────────────────
+	kubectl wait --for=condition=ready pod -l app=postgres -n collector --timeout=60s
+	kubectl wait --for=condition=ready pod -l app=collector-api -n collector --timeout=60s
+	kubectl get all -n collector
+	@echo ──────────────────────────────────────
+	@echo Access via:
+	@echo   API:        https://collector.local
+	@echo   Grafana:    https://grafana.collector.local
+	@echo   Prometheus: https://prometheus.collector.local
+	@echo   Traefik:    http://localhost:30088
+	@echo ──────────────────────────────────────
+
+deploy-all: k8s-apply monitoring-apply tls-generate traefik-apply
+
+destroy-all:
+	kubectl delete -f k8s/ingress.yml --ignore-not-found
+	kubectl delete -f k8s/traefik.yml --ignore-not-found
+	kubectl delete -f k8s/grafana.yml --ignore-not-found
+	kubectl delete -f k8s/prometheus.yml --ignore-not-found
+	kubectl delete -f k8s/app.yml --ignore-not-found
+	kubectl delete -f k8s/postgres.yml --ignore-not-found
+	kubectl delete -f k8s/secret.yml --ignore-not-found
+	kubectl delete -f k8s/configmap.yml --ignore-not-found
+	kubectl delete -f k8s/namespace.yml --ignore-not-found
+	@echo All resources deleted.
+
+# ─────────────────────────────────────────────
+# Load Testing (JMeter)
+# ─────────────────────────────────────────────
+load-test:
+	@if exist jmeter\report rmdir /s /q jmeter\report
+	jmeter -n -t jmeter/collector-load-test.jmx -l jmeter/results.jtl -e -o jmeter/report/
+	@echo ──────────────────────────────────────
+	@echo Load test complete. Open jmeter/report/index.html for results.
+	@echo ──────────────────────────────────────
+
+load-test-gui:
+	jmeter -t jmeter/collector-load-test.jmx
+
+load-test-clean:
+	@if exist jmeter\results.jtl del jmeter\results.jtl
+	@if exist jmeter\report rmdir /s /q jmeter\report
+	@echo JMeter results cleaned.
+
+# ─────────────────────────────────────────────
+# Help
+# ─────────────────────────────────────────────
+help:
+	@echo.
+	@echo  Available targets:
+	@echo  ──────────────────────────────────────
+	@echo  Docker Compose:
+	@echo    start          Start containers (build + detach)
+	@echo    stop           Stop containers
+	@echo    restart        Restart containers
+	@echo    build          Build images only
+	@echo    logs           Tail container logs
+	@echo    clean          Stop + remove volumes
+	@echo.
+	@echo  Quality:
+	@echo    test           Run tests inside container
+	@echo    test-local     Run tests locally
+	@echo    coverage       Run tests with coverage report
+	@echo    lint           Lint with Ruff
+	@echo    lint-fix       Lint + auto-fix
+	@echo    format         Format with Ruff
+	@echo    format-check   Check formatting
+	@echo    security       Audit dependencies
+	@echo    ci             Run all checks (lint, format, security, tests)
+	@echo.
+	@echo  Kubernetes:
+	@echo    minikube-start Start Minikube
+	@echo    minikube-build Build image in Minikube
+	@echo    k8s-apply      Deploy app to K8s
+	@echo    k8s-delete     Remove app from K8s
+	@echo    k8s-status     Show K8s resources
+	@echo    k8s-logs       Tail app logs
+	@echo    k8s-start      Full deploy (minikube + app + monitoring + TLS + ingress)
+	@echo    deploy-all     Deploy without minikube-start/build
+	@echo    destroy-all    Remove everything
+	@echo.
+	@echo  TLS / Ingress:
+	@echo    tls-generate   Generate self-signed TLS cert
+	@echo    traefik-apply  Deploy Traefik + Ingress
+	@echo    traefik-delete Remove Traefik + Ingress
+	@echo.
+	@echo  Monitoring:
+	@echo    monitoring-apply   Deploy Prometheus + Grafana
+	@echo    monitoring-delete  Remove Prometheus + Grafana
+	@echo    monitoring-status  Show monitoring pods/services
+	@echo.
+	@echo  Load Testing:
+	@echo    load-test      Run JMeter headless
+	@echo    load-test-gui  Open JMeter GUI
+	@echo    load-test-clean Clean JMeter results
+	@echo.
