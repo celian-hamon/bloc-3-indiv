@@ -101,22 +101,19 @@ metadata:
     name: traefik
     namespace: collector
 spec:
-    type: NodePort
+    type: LoadBalancer
     selector:
         app: traefik
     ports:
         - name: web
           port: 80
           targetPort: 80
-          nodePort: 30080
         - name: websecure
           port: 443
           targetPort: 443
-          nodePort: 30443
         - name: dashboard
           port: 8080
           targetPort: 8080
-          nodePort: 30088
         - name: metrics
           port: 8082
           targetPort: 8082
