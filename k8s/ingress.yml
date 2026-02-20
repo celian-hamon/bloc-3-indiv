@@ -8,11 +8,12 @@ metadata:
     annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
     tls:
         - hosts:
               - celianhamon.fr
-          secretName: collector-tls
+          secretName: collector-api-tls
     rules:
         - host: celianhamon.fr
           http:
@@ -48,11 +49,12 @@ metadata:
     annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
     tls:
         - hosts:
               - grafana.celianhamon.fr
-          secretName: collector-tls
+          secretName: grafana-tls
     rules:
         - host: grafana.celianhamon.fr
           http:
@@ -74,11 +76,12 @@ metadata:
     annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
     tls:
         - hosts:
               - prometheus.celianhamon.fr
-          secretName: collector-tls
+          secretName: prometheus-tls
     rules:
         - host: prometheus.celianhamon.fr
           http:
