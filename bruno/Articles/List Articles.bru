@@ -1,0 +1,15 @@
+meta {
+  name: List Articles
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/articles/
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  base_url: https://collector.local:30443
+}

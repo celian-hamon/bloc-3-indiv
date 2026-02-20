@@ -1,0 +1,24 @@
+meta {
+  name: Register
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "user@example.com",
+    "full_name": "Test User",
+    "password": "password123",
+    "role": "buyer"
+  }
+}
+
+vars:pre-request {
+  base_url: https://collector.local:30443
+}

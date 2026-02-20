@@ -1,0 +1,12 @@
+opencollection: 1.0.0
+info:
+  name: "collector"
+  type: workspace
+
+collections:
+  - name: "Collector API"
+    path: "../bruno"
+
+specs:
+
+docs: ''

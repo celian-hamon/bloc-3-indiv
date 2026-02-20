@@ -1144,6 +1144,73 @@
                     "refId": "A"
                 }
             ]
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 56
+            },
+            "id": 200,
+            "title": "Database",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 15,
+                        "showPoints": "never",
+                        "axisLabel": "seconds"
+                    },
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 57
+            },
+            "id": 201,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "title": "Postgres Query Response Time",
+            "type": "timeseries",
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by (le) (rate(db_query_duration_seconds_bucket{job=\"collector-api\"}[5m])))",
+                    "legendFormat": "p95 Query Time",
+                    "refId": "A"
+                },
+                {
+                    "expr": "histogram_quantile(0.50, sum by (le) (rate(db_query_duration_seconds_bucket{job=\"collector-api\"}[5m])))",
+                    "legendFormat": "p50 Query Time",
+                    "refId": "B"
+                }
+            ]
         }
     ],
     "refresh": "10s",

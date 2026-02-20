@@ -118,10 +118,12 @@ traefik-delete:
 # ─────────────────────────────────────────────
 monitoring-apply:
 	kubectl apply -f k8s/prometheus.yml
+	kubectl apply -f k8s/grafana-dashboards.yml
 	kubectl apply -f k8s/grafana.yml
 
 monitoring-delete:
 	kubectl delete -f k8s/grafana.yml --ignore-not-found
+	kubectl delete -f k8s/grafana-dashboards.yml --ignore-not-found
 	kubectl delete -f k8s/prometheus.yml --ignore-not-found
 
 monitoring-status:
@@ -140,10 +142,10 @@ k8s-start: minikube-start minikube-build k8s-apply monitoring-apply tls-generate
 	kubectl get all -n collector
 	@echo ──────────────────────────────────────
 	@echo Access via:
-	@echo   API:        https://collector.local
-	@echo   Grafana:    https://grafana.collector.local
-	@echo   Prometheus: https://prometheus.collector.local
-	@echo   Traefik:    http://localhost:30088
+	@echo   API:        https://collector.local:30443
+	@echo   Grafana:    https://grafana.collector.local:30443
+	@echo   Prometheus: https://prometheus.collector.local:30443
+	@echo   Traefik:    http://collector.local:30088/dashboard/
 	@echo ──────────────────────────────────────
 
 deploy-all: k8s-apply monitoring-apply tls-generate traefik-apply
@@ -152,6 +154,7 @@ destroy-all:
 	kubectl delete -f k8s/ingress.yml --ignore-not-found
 	kubectl delete -f k8s/traefik.yml --ignore-not-found
 	kubectl delete -f k8s/grafana.yml --ignore-not-found
+	kubectl delete -f k8s/grafana-dashboards.yml --ignore-not-found
 	kubectl delete -f k8s/prometheus.yml --ignore-not-found
 	kubectl delete -f k8s/app.yml --ignore-not-found
 	kubectl delete -f k8s/postgres.yml --ignore-not-found
@@ -164,7 +167,7 @@ destroy-all:
 # Load Testing (JMeter)
 # ─────────────────────────────────────────────
 load-test:
-	@if exist jmeter\report rmdir /s /q jmeter\report
+	rm -rf jmeter/report
 	jmeter -n -t jmeter/collector-load-test.jmx -l jmeter/results.jtl -e -o jmeter/report/
 	@echo ──────────────────────────────────────
 	@echo Load test complete. Open jmeter/report/index.html for results.
@@ -174,6 +177,6 @@ load-test-gui:
 	jmeter -t jmeter/collector-load-test.jmx
 
 load-test-clean:
-	@if exist jmeter\results.jtl del jmeter\results.jtl
-	@if exist jmeter\report rmdir /s /q jmeter\report
+	rm -f jmeter/results.jtl
+	rm -rf jmeter/report
 	@echo JMeter results cleaned.

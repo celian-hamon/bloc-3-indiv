@@ -4,3 +4,4 @@ guidelines/
 .env
 jmeter/results.jtl
 jmeter/report/
+jmeter.log

@@ -1,0 +1,26 @@
+meta {
+  name: Create Article
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/articles/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Vintage Watch",
+    "description": "A very nice vintage watch.",
+    "price": 250.00,
+    "shipping_cost": 15.00,
+    "image_url": "https://example.com/watch.jpg",
+    "category_id": 1
+  }
+}
