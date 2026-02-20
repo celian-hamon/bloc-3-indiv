@@ -3,90 +3,90 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: collector-api-ingress
-  namespace: collector
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    name: collector-api-ingress
+    namespace: collector
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  tls:
-    - hosts:
-        - collector.local
-      secretName: collector-tls
-  rules:
-    - host: collector.local
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: collector-api
-                port:
-                  number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: collector-api
-                port:
-                  number: 8000
-          - path: /metrics
-            pathType: Prefix
-            backend:
-              service:
-                name: collector-api
-                port:
-                  number: 8000
+    tls:
+        - hosts:
+              - 51.158.121.201.nip.io
+          secretName: collector-tls
+    rules:
+        - host: 51.158.121.201.nip.io
+          http:
+              paths:
+                  - path: /api
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: collector-api
+                            port:
+                                number: 8000
+                  - path: /docs
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: collector-api
+                            port:
+                                number: 8000
+                  - path: /metrics
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: collector-api
+                            port:
+                                number: 8000
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: grafana-ingress
-  namespace: collector
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    name: grafana-ingress
+    namespace: collector
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  tls:
-    - hosts:
-        - grafana.collector.local
-      secretName: collector-tls
-  rules:
-    - host: grafana.collector.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana
-                port:
-                  number: 3000
+    tls:
+        - hosts:
+              - grafana.51.158.121.201.nip.io
+          secretName: collector-tls
+    rules:
+        - host: grafana.51.158.121.201.nip.io
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: grafana
+                            port:
+                                number: 3000
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: prometheus-ingress
-  namespace: collector
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    name: prometheus-ingress
+    namespace: collector
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  tls:
-    - hosts:
-        - prometheus.collector.local
-      secretName: collector-tls
-  rules:
-    - host: prometheus.collector.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: prometheus
-                port:
-                  number: 9090
+    tls:
+        - hosts:
+              - prometheus.51.158.121.201.nip.io
+          secretName: collector-tls
+    rules:
+        - host: prometheus.51.158.121.201.nip.io
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: prometheus
+                            port:
+                                number: 9090
