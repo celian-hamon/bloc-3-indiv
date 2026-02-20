@@ -135,13 +135,13 @@ jobs:
             - name: Build and push Docker image
               run: |
                   # NOTE: Make sure to replace 'my-namespace' with your actual SCW Container Registry namespace
-                  IMAGE="rg.fr-par.scw.cloud/my-namespace/collector-api"
+                  IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
                   docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
                   docker push $IMAGE --all-tags
 
             - name: Update Kubernetes manifests
               run: |
-                  IMAGE="rg.fr-par.scw.cloud/my-namespace/collector-api"
+                  IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
                   # Update image in manifests dynamically to use the freshly built image
                   sed -i "s|image: collector-api:latest|image: $IMAGE:${{ github.sha }}|g" k8s/app.yml
                   # Remove 'imagePullPolicy: Never' so Kapsule will pull the image from the registry
