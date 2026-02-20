@@ -11,10 +11,10 @@ metadata:
 spec:
     tls:
         - hosts:
-              - 51.158.121.201.nip.io
+              - celianhamon.fr
           secretName: collector-tls
     rules:
-        - host: 51.158.121.201.nip.io
+        - host: celianhamon.fr
           http:
               paths:
                   - path: /api
@@ -51,10 +51,10 @@ metadata:
 spec:
     tls:
         - hosts:
-              - grafana.51.158.121.201.nip.io
+              - grafana.celianhamon.fr
           secretName: collector-tls
     rules:
-        - host: grafana.51.158.121.201.nip.io
+        - host: grafana.celianhamon.fr
           http:
               paths:
                   - path: /
@@ -77,10 +77,10 @@ metadata:
 spec:
     tls:
         - hosts:
-              - prometheus.51.158.121.201.nip.io
+              - prometheus.celianhamon.fr
           secretName: collector-tls
     rules:
-        - host: prometheus.51.158.121.201.nip.io
+        - host: prometheus.celianhamon.fr
           http:
               paths:
                   - path: /
