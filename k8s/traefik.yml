@@ -66,6 +66,8 @@ spec:
                       - "--providers.kubernetesingress.namespaces=collector"
                       - "--entrypoints.web.address=:80"
                       - "--entrypoints.websecure.address=:443"
+                      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+                      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
                       - "--metrics.prometheus=true"
                       - "--metrics.prometheus.entrypoint=metrics"
                       - "--entrypoints.metrics.address=:8082"
