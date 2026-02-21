@@ -60,7 +60,6 @@ spec:
                 - name: traefik
                   image: traefik:v3.0
                   args:
-                      - "--api.insecure=true"
                       - "--ping=true"
                       - "--providers.kubernetesingress"
                       - "--providers.kubernetesingress.namespaces=collector"
