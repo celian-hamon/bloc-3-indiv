@@ -5,7 +5,7 @@ export const ShowcasePage = () => {
     return (
         <div className="min-h-screen bg-background overflow-hidden">
             {/* Hero Section */}
-            <section className="relative flex flex-col items-center justify-center min-h-[90vh] px-4 text-center">
+            <section className="relative flex flex-col items-center justify-center min-h-[90vh] px-4 pt-16 text-center">
                 {/* BG gradient blobs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl animate-float" />
@@ -21,7 +21,7 @@ export const ShowcasePage = () => {
                     </span>
                     <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 animate-fade-in-up">
                         Buy &amp; Sell{" "}
-                        <span className="gradient-text">Collectables</span>
+                        <span className="text-primary">Collectables</span>
                         <br />
                         With Confidence
                     </h1>
@@ -128,7 +128,7 @@ export const ShowcasePage = () => {
                             key={stat.label}
                             className={`animate-fade-in-up stagger-${i + 1}`}
                         >
-                            <div className="text-4xl font-extrabold gradient-text">
+                            <div className="text-4xl font-extrabold text-primary">
                                 {stat.value}
                             </div>
                             <div className="text-sm text-muted-foreground mt-1">

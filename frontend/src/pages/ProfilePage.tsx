@@ -77,11 +77,11 @@ export const ProfilePage = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center p-4 py-12 page-enter">
+        <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-24 pb-12 page-enter">
             <div className="w-full max-w-2xl space-y-8">
                 {/* Profile Header */}
                 <div className="animate-fade-in">
-                    <h1 className="text-3xl font-extrabold tracking-tight gradient-text">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-primary">
                         My Profile
                     </h1>
                     <p className="text-muted-foreground mt-1">

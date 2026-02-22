@@ -7,6 +7,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { AddArticlePage } from "./pages/AddArticlePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ShowcasePage } from "./pages/ShowcasePage";
+import { AdminPage } from "./pages/AdminPage";
 
 // Private route wrapper
 export const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -52,6 +53,14 @@ function App() {
                                 element={
                                     <PrivateRoute>
                                         <ProfilePage />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/admin"
+                                element={
+                                    <PrivateRoute>
+                                        <AdminPage />
                                     </PrivateRoute>
                                 }
                             />

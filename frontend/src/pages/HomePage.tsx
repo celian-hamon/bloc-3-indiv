@@ -33,10 +33,10 @@ export const HomePage = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-20 gap-8 page-enter">
+        <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-24 gap-8 page-enter">
             <div className="w-full max-w-6xl">
                 <div className="animate-fade-in mb-8">
-                    <h1 className="text-4xl font-extrabold tracking-tight mb-2 gradient-text">
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-primary">
                         Catalog
                     </h1>
                     <p className="text-muted-foreground text-lg">

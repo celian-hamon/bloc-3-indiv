@@ -31,6 +31,21 @@ async def list_articles(
     return result.scalars().all()
 
 
+@router.get("/admin/all", response_model=list[schemas.Article])
+async def list_all_articles(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_admin),
+) -> Any:
+    """
+    List ALL articles (including unapproved). Admin only.
+    """
+    query = select(models.Article).offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
 @router.get("/{article_id}", response_model=schemas.Article)
 async def get_article(
     article_id: int,

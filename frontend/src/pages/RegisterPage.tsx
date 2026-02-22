@@ -61,7 +61,7 @@ export const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4 page-enter">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4 pt-24 page-enter">
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -bottom-40 left-1/4 w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-3xl animate-float" />
@@ -69,7 +69,7 @@ export const RegisterPage = () => {
 
             <Card className="w-full max-w-md relative z-10 shadow-xl animate-scale-in">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-2xl gradient-text">
+                    <CardTitle className="text-2xl">
                         Create an Account
                     </CardTitle>
                     <CardDescription>

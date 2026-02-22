@@ -10,7 +10,7 @@ export const Navbar = () => {
             <div className="flex items-center gap-8">
                 <Link
                     to="/"
-                    className="text-xl font-bold tracking-tight gradient-text hover:opacity-80 transition-opacity"
+                    className="text-xl font-bold tracking-tight text-primary hover:opacity-80 transition-opacity"
                 >
                     Collector
                 </Link>
@@ -68,6 +68,16 @@ export const Navbar = () => {
                                 className="transition-all-smooth hover:scale-105"
                             >
                                 <Link to="/new">+ List Item</Link>
+                            </Button>
+                        )}
+                        {user.role === "admin" && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="transition-all-smooth"
+                            >
+                                <Link to="/admin">Admin</Link>
                             </Button>
                         )}
                         <Button
