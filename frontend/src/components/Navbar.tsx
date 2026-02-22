@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "./ui/button";
+import { MessageSquare } from "lucide-react";
 
 export const Navbar = () => {
     const { user, logout } = useAuth();
@@ -37,6 +38,20 @@ export const Navbar = () => {
             <div className="flex items-center gap-3">
                 {user ? (
                     <>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="transition-all-smooth"
+                        >
+                            <Link
+                                to="/chat"
+                                className="flex items-center gap-2"
+                                title="Messages"
+                            >
+                                <MessageSquare className="w-5 h-5 text-primary" />
+                            </Link>
+                        </Button>
                         <Button
                             variant="ghost"
                             size="sm"

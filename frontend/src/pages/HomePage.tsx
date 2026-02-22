@@ -23,6 +23,19 @@ interface Category {
     description: string | null;
 }
 
+const getFirstImage = (url: string | null): string | null => {
+    if (!url) return null;
+    try {
+        if (url.startsWith("[")) {
+            const arr = JSON.parse(url);
+            return arr.length > 0 ? arr[0] : null;
+        }
+    } catch {
+        // fallback
+    }
+    return url;
+};
+
 export const HomePage = () => {
     const [items, setItems] = useState<Item[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -227,9 +240,13 @@ export const HomePage = () => {
                                         className={`flex flex-col card-hover overflow-hidden border-border/50 cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
                                     >
                                         <div className="aspect-video w-full bg-muted overflow-hidden relative group">
-                                            {item.image_url ? (
+                                            {getFirstImage(item.image_url) ? (
                                                 <img
-                                                    src={item.image_url}
+                                                    src={
+                                                        getFirstImage(
+                                                            item.image_url,
+                                                        )!
+                                                    }
                                                     alt={item.title}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                                 />

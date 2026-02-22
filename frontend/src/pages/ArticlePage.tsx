@@ -1,8 +1,18 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
+import { MessageSquare } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "../components/ui/carousel";
+import ReactMarkdown from "react-markdown";
 
 interface Article {
     id: number;
@@ -24,10 +34,38 @@ interface Category {
 
 export const ArticlePage = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
     const [article, setArticle] = useState<Article | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [chatLoading, setChatLoading] = useState(false);
+
+    const handleChatClick = async () => {
+        if (!user) {
+            navigate("/login");
+            return;
+        }
+        if (article?.seller_id === user.id) {
+            alert("You cannot chat with yourself about your own item");
+            return;
+        }
+
+        setChatLoading(true);
+        try {
+            const res = await api.post("/chat/conversations", {
+                article_id: article?.id,
+            });
+            navigate(`/chat/${res.data.id}`);
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { detail?: string } } };
+            alert(error.response?.data?.detail || "Failed to start chat");
+        } finally {
+            setChatLoading(false);
+        }
+    };
 
     useEffect(() => {
         api.get("/categories/")
@@ -93,6 +131,20 @@ export const ArticlePage = () => {
 
     const totalPrice = article.price + (article.shipping_cost || 0);
 
+    const getImages = (url: string | null): string[] => {
+        if (!url) return [];
+        try {
+            if (url.startsWith("[")) {
+                return JSON.parse(url);
+            }
+        } catch {
+            // fallback
+        }
+        return [url];
+    };
+
+    const images = getImages(article.image_url);
+
     return (
         <div className="min-h-screen bg-background p-4 pt-24 pb-12 page-enter">
             <div className="max-w-5xl mx-auto">
@@ -109,15 +161,48 @@ export const ArticlePage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Image */}
+                    {/* Image Carousel */}
                     <div className="animate-fade-in-up">
-                        <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border/50 shadow-lg">
-                            {article.image_url ? (
-                                <img
-                                    src={article.image_url}
-                                    alt={article.title}
-                                    className="w-full h-full object-cover"
-                                />
+                        <div className="aspect-square rounded-2xl overflow-hidden bg-muted border border-border/50 shadow-lg relative flex items-center justify-center">
+                            {images.length > 0 ? (
+                                images.length === 1 ? (
+                                    <img
+                                        src={images[0]}
+                                        alt={article.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <Carousel className="w-full h-full">
+                                        <CarouselContent>
+                                            {images.map((imgUrl, index) => (
+                                                <CarouselItem key={index}>
+                                                    <div className="aspect-square w-full">
+                                                        <img
+                                                            src={imgUrl}
+                                                            alt={`${article.title} - Image ${index + 1}`}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                </CarouselItem>
+                                            ))}
+                                        </CarouselContent>
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-4">
+                                            <CarouselPrevious className="relative left-0 translate-y-0 shadow-md bg-white border border-border text-foreground hover:bg-muted" />
+                                        </div>
+                                        <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <CarouselNext className="relative right-0 translate-y-0 shadow-md bg-white border border-border text-foreground hover:bg-muted" />
+                                        </div>
+                                        {/* Pagination indicator dots */}
+                                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
+                                            {images.map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="w-2 h-2 rounded-full bg-black/40 shadow-sm"
+                                                />
+                                            ))}
+                                        </div>
+                                    </Carousel>
+                                )
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/50">
                                     <span className="text-6xl mb-3 animate-float">
@@ -178,6 +263,19 @@ export const ArticlePage = () => {
                                     <span>Total</span>
                                     <span>${totalPrice.toFixed(2)}</span>
                                 </div>
+                                <div className="pt-2">
+                                    <Button
+                                        className="w-full gap-2 shadow-sm font-bold tracking-wide"
+                                        size="lg"
+                                        disabled={chatLoading}
+                                        onClick={handleChatClick}
+                                    >
+                                        <MessageSquare className="w-5 h-5" />
+                                        {chatLoading
+                                            ? "Loading..."
+                                            : "Chat & Buy"}
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -186,10 +284,12 @@ export const ArticlePage = () => {
                             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                                 Description
                             </h2>
-                            <p className="text-foreground leading-relaxed">
-                                {article.description ||
-                                    "No description provided for this item."}
-                            </p>
+                            <div className="prose dark:prose-invert max-w-none">
+                                <ReactMarkdown>
+                                    {article.description ||
+                                        "No description provided for this item."}
+                                </ReactMarkdown>
+                            </div>
                         </div>
 
                         {/* Meta Info */}

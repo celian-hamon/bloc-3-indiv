@@ -3,6 +3,7 @@ from .fraud_log import FraudLog
 from .item import Article, ArticleCreate, ArticleInDB, ArticlePriceUpdate, ArticleUpdate
 from .token import Token, TokenPayload
 from .user import User, UserCreate, UserInDB, UserUpdate
+from .chat import Conversation, Message, MessageCreate, ConversationCreate, PaymentSimulation
 
 __all__ = [
     "Article",
@@ -19,4 +20,9 @@ __all__ = [
     "Category",
     "CategoryCreate",
     "FraudLog",
+    "Conversation",
+    "Message",
+    "MessageCreate",
+    "ConversationCreate",
+    "PaymentSimulation",
 ]

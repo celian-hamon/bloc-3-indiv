@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
 import {
     Card,
     CardContent,
@@ -108,7 +109,7 @@ export const AddArticlePage = () => {
         setLoading(true);
 
         try {
-            const imageUrl = images.length > 0 ? images[0] : null;
+            const imageUrl = images.length > 0 ? JSON.stringify(images) : null;
 
             await api.post("/articles/", {
                 title,
@@ -301,13 +302,16 @@ export const AddArticlePage = () => {
                         <div className="space-y-2">
                             <label className="text-sm font-medium">
                                 Description
+                                <span className="text-xs text-muted-foreground ml-2 font-normal">
+                                    (Supports Markdown)
+                                </span>
                             </label>
-                            <textarea
+                            <Textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                rows={3}
-                                placeholder="Describe your item..."
-                                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all-smooth"
+                                rows={5}
+                                placeholder="Describe your item... (Markdown styling supported!)"
+                                className="transition-all-smooth"
                             />
                         </div>
 

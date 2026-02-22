@@ -43,6 +43,19 @@ interface FraudLogEntry {
 
 type Tab = "articles" | "categories" | "fraud";
 
+const getFirstImage = (url: string | null): string | null => {
+    if (!url) return null;
+    try {
+        if (url.startsWith("[")) {
+            const arr = JSON.parse(url);
+            return arr.length > 0 ? arr[0] : null;
+        }
+    } catch {
+        // fallback
+    }
+    return url;
+};
+
 export const AdminPage = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -269,9 +282,15 @@ export const AdminPage = () => {
                                     >
                                         <CardContent className="p-4 flex gap-4 items-center">
                                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                                                {article.image_url ? (
+                                                {getFirstImage(
+                                                    article.image_url,
+                                                ) ? (
                                                     <img
-                                                        src={article.image_url}
+                                                        src={
+                                                            getFirstImage(
+                                                                article.image_url,
+                                                            )!
+                                                        }
                                                         alt={article.title}
                                                         className="w-full h-full object-cover"
                                                     />

@@ -10,6 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { ShowcasePage } from "./pages/ShowcasePage";
 import { AdminPage } from "./pages/AdminPage";
 import { ArticlePage } from "./pages/ArticlePage";
+import { ChatPage } from "./pages/ChatPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 // Private route wrapper
@@ -76,6 +77,22 @@ function App() {
                                 element={
                                     <PrivateRoute>
                                         <AdminPage />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/chat"
+                                element={
+                                    <PrivateRoute>
+                                        <ChatPage />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/chat/:id"
+                                element={
+                                    <PrivateRoute>
+                                        <ChatPage />
                                     </PrivateRoute>
                                 }
                             />

@@ -22,6 +22,19 @@ interface Article {
     category_id: number | null;
 }
 
+const getFirstImage = (url: string | null): string | null => {
+    if (!url) return null;
+    try {
+        if (url.startsWith("[")) {
+            const arr = JSON.parse(url);
+            return arr.length > 0 ? arr[0] : null;
+        }
+    } catch {
+        // fallback
+    }
+    return url;
+};
+
 export const ProfilePage = () => {
     const { user } = useAuth();
     const [articles, setArticles] = useState<Article[]>([]);
@@ -168,9 +181,15 @@ export const ProfilePage = () => {
                                             className={`card-hover overflow-hidden cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
                                         >
                                             <div className="aspect-video bg-muted relative overflow-hidden group">
-                                                {article.image_url ? (
+                                                {getFirstImage(
+                                                    article.image_url,
+                                                ) ? (
                                                     <img
-                                                        src={article.image_url}
+                                                        src={
+                                                            getFirstImage(
+                                                                article.image_url,
+                                                            )!
+                                                        }
                                                         alt={article.title}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                                     />
