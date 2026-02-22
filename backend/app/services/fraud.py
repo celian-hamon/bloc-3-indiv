@@ -1,5 +1,7 @@
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.fraud_log import FraudLog
 
 logger = logging.getLogger(__name__)

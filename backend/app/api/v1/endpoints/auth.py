@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app import schemas
-from app.api.deps import optional_oauth2, get_current_user
+from app.api.deps import get_current_user, optional_oauth2
 from app.core import security
 from app.core.config import settings
 from app.db.session import get_db
