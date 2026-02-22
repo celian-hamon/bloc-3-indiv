@@ -50,10 +50,17 @@ export const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <Card className="w-full max-w-sm">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4 page-enter">
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 right-1/4 w-[400px] h-[400px] rounded-full bg-primary/5 blur-3xl animate-float" />
+            </div>
+
+            <Card className="w-full max-w-sm relative z-10 shadow-xl animate-scale-in">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-2xl">Sign In</CardTitle>
+                    <CardTitle className="text-2xl gradient-text">
+                        Welcome Back
+                    </CardTitle>
                     <CardDescription>
                         Enter your email and password to access your account
                     </CardDescription>
@@ -61,7 +68,7 @@ export const LoginPage = () => {
                 <CardContent>
                     <form onSubmit={handleLogin} className="space-y-4">
                         {error && (
-                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md animate-scale-in">
                                 {error}
                             </div>
                         )}
@@ -75,6 +82,7 @@ export const LoginPage = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 autoComplete="email"
+                                className="transition-all-smooth focus:ring-2 focus:ring-primary/40"
                             />
                         </div>
                         <div className="space-y-2">
@@ -87,9 +95,13 @@ export const LoginPage = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="current-password"
+                                className="transition-all-smooth focus:ring-2 focus:ring-primary/40"
                             />
                         </div>
-                        <Button type="submit" className="w-full">
+                        <Button
+                            type="submit"
+                            className="w-full transition-all-smooth hover:scale-[1.02]"
+                        >
                             Sign in
                         </Button>
                     </form>
@@ -98,7 +110,7 @@ export const LoginPage = () => {
                         Don't have an account?{" "}
                         <Link
                             to="/register"
-                            className="font-medium text-primary hover:underline"
+                            className="font-medium text-primary hover:underline transition-colors"
                         >
                             Create an account
                         </Link>

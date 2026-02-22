@@ -61,10 +61,15 @@ export const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <Card className="w-full max-w-md">
+        <div className="min-h-screen bg-background flex items-center justify-center p-4 page-enter">
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -bottom-40 left-1/4 w-[400px] h-[400px] rounded-full bg-purple-500/5 blur-3xl animate-float" />
+            </div>
+
+            <Card className="w-full max-w-md relative z-10 shadow-xl animate-scale-in">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-2xl">
+                    <CardTitle className="text-2xl gradient-text">
                         Create an Account
                     </CardTitle>
                     <CardDescription>
@@ -74,7 +79,7 @@ export const RegisterPage = () => {
                 <CardContent>
                     <form onSubmit={handleRegister} className="space-y-4">
                         {error && (
-                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md animate-scale-in">
                                 {error}
                             </div>
                         )}
@@ -87,6 +92,7 @@ export const RegisterPage = () => {
                                 type="text"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
+                                className="transition-all-smooth focus:ring-2 focus:ring-primary/40"
                             />
                         </div>
 
@@ -99,6 +105,7 @@ export const RegisterPage = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                className="transition-all-smooth focus:ring-2 focus:ring-primary/40"
                             />
                         </div>
 
@@ -112,6 +119,7 @@ export const RegisterPage = () => {
                                 minLength={6}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                className="transition-all-smooth focus:ring-2 focus:ring-primary/40"
                             />
                         </div>
 
@@ -122,14 +130,17 @@ export const RegisterPage = () => {
                             <select
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all-smooth"
                             >
                                 <option value="buyer">Buyer</option>
                                 <option value="seller">Seller</option>
                             </select>
                         </div>
 
-                        <Button type="submit" className="w-full">
+                        <Button
+                            type="submit"
+                            className="w-full transition-all-smooth hover:scale-[1.02]"
+                        >
                             Create account
                         </Button>
                     </form>
@@ -138,7 +149,7 @@ export const RegisterPage = () => {
                         Already have an account?{" "}
                         <Link
                             to="/login"
-                            className="font-medium text-primary hover:underline"
+                            className="font-medium text-primary hover:underline transition-colors"
                         >
                             Sign in Instead
                         </Link>

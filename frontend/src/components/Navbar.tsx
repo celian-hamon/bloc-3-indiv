@@ -6,43 +6,94 @@ export const Navbar = () => {
     const { user, logout } = useAuth();
 
     return (
-        <nav className="w-full h-16 border-b border-border bg-background flex items-center justify-between px-6 md:px-12 fixed top-0 z-50">
-            <div className="flex items-center gap-6">
+        <nav className="w-full h-16 border-b border-border glass flex items-center justify-between px-6 md:px-12 fixed top-0 z-50 transition-all-smooth">
+            <div className="flex items-center gap-8">
                 <Link
                     to="/"
-                    className="text-xl font-bold tracking-tight text-primary"
+                    className="text-xl font-bold tracking-tight gradient-text hover:opacity-80 transition-opacity"
                 >
                     Collector
                 </Link>
+                <div className="hidden md:flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="transition-all-smooth"
+                    >
+                        <Link to="/">Catalog</Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="transition-all-smooth"
+                    >
+                        <Link to="/showcase">About</Link>
+                    </Button>
+                </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
                 {user ? (
                     <>
-                        <div className="hidden md:flex text-sm text-muted-foreground mr-4">
-                            Welcome,{" "}
-                            <span className="font-semibold text-foreground ml-1">
-                                {user.full_name || user.email}
-                            </span>
-                            <span className="ml-2 px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs uppercase tracking-wider">
-                                {user.role}
-                            </span>
-                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="transition-all-smooth"
+                        >
+                            <Link
+                                to="/profile"
+                                className="flex items-center gap-2"
+                            >
+                                <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                                    {(user.full_name || user.email)
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                </div>
+                                <span className="hidden md:inline">
+                                    {user.full_name || user.email}
+                                </span>
+                            </Link>
+                        </Button>
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs uppercase tracking-wider font-semibold hidden md:inline">
+                            {user.role}
+                        </span>
                         {(user.role === "seller" || user.role === "admin") && (
-                            <Button variant="outline" size="sm" asChild>
-                                <Link to="/new">Add Item</Link>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="transition-all-smooth hover:scale-105"
+                            >
+                                <Link to="/new">+ List Item</Link>
                             </Button>
                         )}
-                        <Button variant="ghost" size="sm" onClick={logout}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={logout}
+                            className="transition-all-smooth text-muted-foreground hover:text-destructive"
+                        >
                             Log out
                         </Button>
                     </>
                 ) : (
                     <>
-                        <Button variant="ghost" size="sm" asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="transition-all-smooth"
+                        >
                             <Link to="/login">Sign in</Link>
                         </Button>
-                        <Button size="sm" asChild>
+                        <Button
+                            size="sm"
+                            asChild
+                            className="transition-all-smooth hover:scale-105"
+                        >
                             <Link to="/register">Sign up</Link>
                         </Button>
                     </>
