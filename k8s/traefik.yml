@@ -70,6 +70,8 @@ spec:
                       - "--providers.kubernetesingress.ingressendpoint.publishedservice=collector/traefik"
                       - "--entrypoints.web.address=:80"
                       - "--entrypoints.websecure.address=:443"
+                      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+                      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
                       - "--entrypoints.websecure.http.tls=true"
                       - "--metrics.prometheus=true"
                       - "--metrics.prometheus.entrypoint=metrics"
@@ -138,4 +140,4 @@ data:
         tls:
             options:
                 default:
-                    sniStrict: false
+                    sniStrict: true
