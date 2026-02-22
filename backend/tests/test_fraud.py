@@ -10,7 +10,7 @@ async def test_normal_price_change(db_session):
     """Price change ≤ 50% should NOT be flagged."""
     result = await check_price_change(article_id=1, old_price=100.0, new_price=140.0, seller_id=1, db=db_session)
     assert result["is_suspicious"] is False
-    assert result["reason"] == ""
+    assert result["reason"] == "OK"
 
 
 @pytest.mark.asyncio
