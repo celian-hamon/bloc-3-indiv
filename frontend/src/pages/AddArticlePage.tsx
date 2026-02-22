@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { Button } from "../components/ui/button";
@@ -11,6 +11,12 @@ import {
     CardTitle,
 } from "../components/ui/card";
 
+interface Category {
+    id: number;
+    name: string;
+    description: string | null;
+}
+
 export const AddArticlePage = () => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -18,12 +24,21 @@ export const AddArticlePage = () => {
     const [shippingCost, setShippingCost] = useState("0");
     const [images, setImages] = useState<string[]>([]);
     const [categoryId, setCategoryId] = useState("");
+    const [categories, setCategories] = useState<Category[]>([]);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        api.get("/categories/")
+            .then((res) => setCategories(res.data))
+            .catch(() => {});
+    }, []);
 
     const addImage = (dataUrl: string) => {
         setImages((prev) => [...prev, dataUrl]);
@@ -46,7 +61,7 @@ export const AddArticlePage = () => {
         });
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleFileDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
         handleFileSelect(e.dataTransfer.files);
@@ -61,13 +76,38 @@ export const AddArticlePage = () => {
         setIsDragging(false);
     };
 
+    // --- Photo reorder drag & drop ---
+    const handlePhotoDragStart = (index: number) => {
+        setDragIndex(index);
+    };
+
+    const handlePhotoDragEnter = (index: number) => {
+        setDragOverIndex(index);
+    };
+
+    const handlePhotoDragEnd = () => {
+        if (
+            dragIndex !== null &&
+            dragOverIndex !== null &&
+            dragIndex !== dragOverIndex
+        ) {
+            setImages((prev) => {
+                const copy = [...prev];
+                const [moved] = copy.splice(dragIndex, 1);
+                copy.splice(dragOverIndex, 0, moved);
+                return copy;
+            });
+        }
+        setDragIndex(null);
+        setDragOverIndex(null);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
         try {
-            // Use the first image as the main image_url (API supports single image_url)
             const imageUrl = images.length > 0 ? images[0] : null;
 
             await api.post("/articles/", {
@@ -137,8 +177,7 @@ export const AddArticlePage = () => {
                         List a New Item
                     </CardTitle>
                     <CardDescription>
-                        Enter the details of the item you want to sell. Items
-                        start as unapproved.
+                        Enter the details of the item you want to sell.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -149,26 +188,42 @@ export const AddArticlePage = () => {
                             </div>
                         )}
 
-                        {/* Multi-Image Upload Zone */}
+                        {/* Multi-Image Upload with Drag & Drop Reorder */}
                         <div className="space-y-3">
                             <label className="text-sm font-medium">
                                 Product Images
                             </label>
 
-                            {/* Image preview grid */}
                             {images.length > 0 && (
                                 <div className="grid grid-cols-3 gap-3">
                                     {images.map((img, index) => (
                                         <div
-                                            key={index}
-                                            className="relative group aspect-square rounded-lg overflow-hidden border border-border animate-scale-in"
+                                            key={`${index}-${img.slice(-20)}`}
+                                            draggable
+                                            onDragStart={() =>
+                                                handlePhotoDragStart(index)
+                                            }
+                                            onDragEnter={() =>
+                                                handlePhotoDragEnter(index)
+                                            }
+                                            onDragEnd={handlePhotoDragEnd}
+                                            onDragOver={(e) =>
+                                                e.preventDefault()
+                                            }
+                                            className={`relative group aspect-square rounded-lg overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                                                dragIndex === index
+                                                    ? "opacity-40 scale-95"
+                                                    : dragOverIndex === index
+                                                      ? "border-primary ring-2 ring-primary/30 scale-105"
+                                                      : "border-border"
+                                            }`}
                                         >
                                             <img
                                                 src={img}
                                                 alt={`Upload ${index + 1}`}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover pointer-events-none"
                                             />
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -184,15 +239,24 @@ export const AddArticlePage = () => {
                                                     Main
                                                 </span>
                                             )}
+                                            <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] font-mono px-1.5 py-0.5 rounded">
+                                                {index + 1}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
+                            )}
+                            {images.length > 1 && (
+                                <p className="text-xs text-muted-foreground/70">
+                                    💡 Drag photos to reorder. First image is
+                                    the main listing photo.
+                                </p>
                             )}
 
                             {/* Dropzone */}
                             <div
                                 className={`dropzone rounded-xl p-6 text-center cursor-pointer transition-all-smooth ${isDragging ? "active" : ""}`}
-                                onDrop={handleDrop}
+                                onDrop={handleFileDrop}
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onClick={() => fileInputRef.current?.click()}
@@ -205,8 +269,7 @@ export const AddArticlePage = () => {
                                             : "Drag & drop images here, or click to browse"}
                                     </p>
                                     <p className="text-xs text-muted-foreground/60 mt-1">
-                                        PNG, JPG, WEBP — you can select multiple
-                                        files
+                                        PNG, JPG, WEBP — select multiple files
                                     </p>
                                 </div>
                                 <input
@@ -283,15 +346,20 @@ export const AddArticlePage = () => {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">
-                                Category ID (optional)
+                                Category
                             </label>
-                            <Input
-                                type="number"
+                            <select
                                 value={categoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
-                                placeholder="E.g., 1"
-                                className="transition-all-smooth"
-                            />
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all-smooth"
+                            >
+                                <option value="">No category</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <Button

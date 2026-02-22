@@ -17,15 +17,21 @@ async def list_articles(
     skip: int = 0,
     limit: int = 100,
     category_id: int = None,
+    search: str = None,
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """
     Browse the catalog. Public endpoint — no authentication required.
-    Only returns approved articles.
+    Only returns approved articles. Supports category and text search filtering.
     """
     query = select(models.Article).where(models.Article.is_approved == True)
     if category_id:
         query = query.where(models.Article.category_id == category_id)
+    if search:
+        search_filter = f"%{search}%"
+        query = query.where(
+            models.Article.title.ilike(search_filter) | models.Article.description.ilike(search_filter)
+        )
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
@@ -42,6 +48,26 @@ async def list_all_articles(
     List ALL articles (including unapproved). Admin only.
     """
     query = select(models.Article).offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+@router.get("/mine", response_model=list[schemas.Article])
+async def list_my_articles(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    List current user's own articles (including unapproved).
+    """
+    query = (
+        select(models.Article)
+        .where(models.Article.seller_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
+    )
     result = await db.execute(query)
     return result.scalars().all()
 
@@ -141,6 +167,7 @@ async def update_article_price(
         old_price=old_price,
         new_price=price_update.price,
         seller_id=current_user.id,
+        db=db,
     )
 
     if fraud_result["is_suspicious"]:

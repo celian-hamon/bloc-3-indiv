@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app import schemas
+from app.api.deps import optional_oauth2, get_current_user
 from app.core import security
 from app.core.config import settings
 from app.db.session import get_db
@@ -44,12 +45,23 @@ async def register(
     *,
     db: AsyncSession = Depends(get_db),
     user_in: schemas.UserCreate,
+    token: str | None = Depends(optional_oauth2),
 ) -> Any:
     """
-    Create new user. Accepted roles: buyer, seller, admin.
+    Create new user.
+    - buyer / seller: public registration (no auth needed).
+    - admin: requires a valid admin JWT.
     """
     if user_in.role not in ("buyer", "seller", "admin"):
         raise HTTPException(status_code=400, detail="Invalid role. Must be buyer, seller, or admin.")
+
+    # Admin creation requires an existing admin's token
+    if user_in.role == "admin":
+        if not token:
+            raise HTTPException(status_code=403, detail="Admin creation requires admin authentication.")
+        current_user = await get_current_user(db=db, token=token)
+        if current_user.role != "admin":
+            raise HTTPException(status_code=403, detail="Only existing admins can create admin accounts.")
 
     stmt = select(user_model.User).where(user_model.User.email == user_in.email)
     result = await db.execute(stmt)
@@ -70,3 +82,4 @@ async def register(
     await db.commit()
     await db.refresh(user)
     return user
+

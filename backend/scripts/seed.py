@@ -26,7 +26,8 @@ async def seed():
             return
 
         print("Seeding database...")
-        # Create user
+
+        # ─── Admin User ───
         admin = User(
             email="admin@celianhamon.fr",
             full_name="Admin User",
@@ -37,53 +38,67 @@ async def seed():
         await session.commit()
         await session.refresh(admin)
 
-        # Create categories
-        electronics = Category(name="Electronics", description="Gadgets and devices")
-        clothing = Category(name="Clothing", description="Apparel and accessories")
-        home = Category(name="Home", description="Furniture and decor")
+        # ─── Categories ───
+        categories_data = [
+            ("Electronics", "Smartphones, laptops, tablets, cameras, and other electronic devices"),
+            ("Clothing & Accessories", "Apparel, shoes, bags, watches, and fashion accessories"),
+            ("Home & Garden", "Furniture, decor, kitchen appliances, and gardening tools"),
+            ("Sports & Outdoors", "Sports equipment, outdoor gear, camping, and fitness accessories"),
+            ("Books & Media", "Books, vinyl records, DVDs, video games, and digital media"),
+            ("Collectibles & Art", "Antiques, coins, stamps, paintings, and rare collectibles"),
+            ("Toys & Hobbies", "Toys, board games, model kits, and hobby supplies"),
+            ("Automotive", "Car parts, motorcycle accessories, tools, and vehicle electronics"),
+            ("Health & Beauty", "Skincare, cosmetics, supplements, and personal care products"),
+            ("Music & Instruments", "Musical instruments, audio equipment, and studio gear"),
+        ]
 
-        session.add_all([electronics, clothing, home])
+        category_objects = []
+        for name, description in categories_data:
+            cat = Category(name=name, description=description)
+            session.add(cat)
+            category_objects.append(cat)
+
         await session.commit()
+        for cat in category_objects:
+            await session.refresh(cat)
 
-        # Refresh to get IDs
-        await session.refresh(electronics)
-        await session.refresh(clothing)
-        await session.refresh(home)
-
-        # Create items
+        # ─── Sample Articles ───
         items = [
             Article(
                 title="Laptop Pro",
-                description="High performance laptop",
+                description="High performance laptop with 16GB RAM and 512GB SSD",
                 price=1200.0,
                 shipping_cost=20.0,
                 is_approved=True,
-                category_id=electronics.id,
+                category_id=category_objects[0].id,  # Electronics
                 seller_id=admin.id,
             ),
             Article(
                 title="Wireless Mouse",
-                description="Ergonomic wireless mouse",
+                description="Ergonomic wireless mouse with precision tracking",
                 price=30.0,
                 shipping_cost=5.0,
                 is_approved=True,
-                category_id=electronics.id,
+                category_id=category_objects[0].id,  # Electronics
                 seller_id=admin.id,
             ),
             Article(
                 title="Cotton T-Shirt",
-                description="Comfortable everyday wear",
+                description="Comfortable everyday wear, 100% organic cotton",
                 price=15.0,
                 shipping_cost=2.0,
                 is_approved=True,
-                category_id=clothing.id,
+                category_id=category_objects[1].id,  # Clothing
                 seller_id=admin.id,
             ),
         ]
         session.add_all(items)
         await session.commit()
 
-        print("Database seeded successfully!")
+        print(f"Database seeded successfully!")
+        print(f"  - 1 admin user (admin@celianhamon.fr / password123)")
+        print(f"  - {len(category_objects)} categories")
+        print(f"  - {len(items)} sample articles")
 
 
 if __name__ == "__main__":

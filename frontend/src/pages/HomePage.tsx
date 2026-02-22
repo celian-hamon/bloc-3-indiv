@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import api from "../lib/api";
 import { Card, CardContent } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 interface Item {
     id: number;
@@ -14,13 +17,47 @@ interface Item {
     shipping_cost?: number;
 }
 
+interface Category {
+    id: number;
+    name: string;
+    description: string | null;
+}
+
 export const HomePage = () => {
     const [items, setItems] = useState<Item[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<number | null>(
+        null,
+    );
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Fetch categories once
     useEffect(() => {
-        api.get("/articles/")
+        api.get("/categories/")
+            .then((res) => setCategories(res.data))
+            .catch(() => {});
+    }, []);
+
+    // Debounce search input (300ms)
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // Fetch articles when filters change
+    const fetchArticles = useCallback(() => {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (selectedCategory)
+            params.set("category_id", String(selectedCategory));
+        if (debouncedSearch.trim())
+            params.set("search", debouncedSearch.trim());
+        const qs = params.toString() ? `?${params.toString()}` : "";
+
+        api.get(`/articles/${qs}`)
             .then((res) => {
                 setItems(res.data);
                 setLoading(false);
@@ -30,21 +67,89 @@ export const HomePage = () => {
                 setError("Failed to fetch articles from API.");
                 setLoading(false);
             });
-    }, []);
+    }, [selectedCategory, debouncedSearch]);
+
+    useEffect(() => {
+        fetchArticles();
+    }, [fetchArticles]);
+
+    const getCategoryName = (categoryId?: number) => {
+        if (!categoryId) return null;
+        return categories.find((c) => c.id === categoryId)?.name || null;
+    };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-24 gap-8 page-enter">
+        <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-24 gap-6 page-enter">
             <div className="w-full max-w-6xl">
-                <div className="animate-fade-in mb-8">
+                <div className="animate-fade-in mb-6">
                     <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-primary">
                         Catalog
                     </h1>
                     <p className="text-muted-foreground text-lg">
-                        Browse items currently approved and available for sale
-                        on the platform.
+                        Browse items currently approved and available for sale.
                     </p>
                 </div>
 
+                {/* Search & Filter Bar */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6 animate-fade-in-up">
+                    <div className="relative flex-1">
+                        <svg
+                            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                            />
+                        </svg>
+                        <Input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search items by name or description..."
+                            className="pl-10 transition-all-smooth focus:ring-2 focus:ring-primary/40"
+                        />
+                    </div>
+                </div>
+
+                {/* Category Pills */}
+                {categories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-8 animate-fade-in-up stagger-1">
+                        <Button
+                            variant={
+                                selectedCategory === null
+                                    ? "default"
+                                    : "outline"
+                            }
+                            size="sm"
+                            onClick={() => setSelectedCategory(null)}
+                            className="transition-all-smooth hover:scale-105"
+                        >
+                            All
+                        </Button>
+                        {categories.map((cat) => (
+                            <Button
+                                key={cat.id}
+                                variant={
+                                    selectedCategory === cat.id
+                                        ? "default"
+                                        : "outline"
+                                }
+                                size="sm"
+                                onClick={() => setSelectedCategory(cat.id)}
+                                className="transition-all-smooth hover:scale-105"
+                            >
+                                {cat.name}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Loading */}
                 {loading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {Array.from({ length: 8 }).map((_, i) => (
@@ -63,70 +168,116 @@ export const HomePage = () => {
                     </div>
                 )}
 
+                {/* Error */}
                 {error && (
                     <div className="p-4 bg-destructive/10 text-destructive font-semibold rounded-md text-center max-w-md mx-auto animate-scale-in">
                         {error}
                     </div>
                 )}
 
+                {/* Empty */}
                 {!loading && !error && items.length === 0 && (
                     <div className="text-center py-20 border-2 border-dashed border-muted rounded-xl bg-card animate-fade-in-up">
                         <div className="text-6xl mb-4 animate-float">📦</div>
                         <h3 className="text-2xl font-bold text-muted-foreground">
-                            No Items Available
+                            No Items Found
                         </h3>
                         <p className="mt-2 text-muted-foreground/80">
-                            Check back later or register as a seller to list
-                            items!
+                            {debouncedSearch
+                                ? `No results for "${debouncedSearch}".`
+                                : selectedCategory
+                                  ? "No items in this category yet."
+                                  : "Check back later or register as a seller to list items!"}
                         </p>
+                        {(debouncedSearch || selectedCategory) && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-4"
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setSelectedCategory(null);
+                                }}
+                            >
+                                Clear Filters
+                            </Button>
+                        )}
                     </div>
                 )}
 
-                {items.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {items.map((item, i) => (
-                            <Card
-                                key={item.id}
-                                className={`flex flex-col card-hover overflow-hidden border-border/50 animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
-                            >
-                                <div className="aspect-video w-full bg-muted overflow-hidden relative group">
-                                    {item.image_url ? (
-                                        <img
-                                            src={item.image_url}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/50 font-medium">
-                                            <span className="text-4xl mb-2 block animate-float">
-                                                📸
-                                            </span>
-                                            No Image
+                {/* Results */}
+                {!loading && items.length > 0 && (
+                    <>
+                        <p className="text-sm text-muted-foreground mb-4 animate-fade-in">
+                            {items.length} item{items.length !== 1 ? "s" : ""}{" "}
+                            found
+                            {debouncedSearch ? ` for "${debouncedSearch}"` : ""}
+                            {selectedCategory
+                                ? ` in ${getCategoryName(selectedCategory) || "category"}`
+                                : ""}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {items.map((item, i) => (
+                                <Link
+                                    key={item.id}
+                                    to={`/article/${item.id}`}
+                                    className="block"
+                                >
+                                    <Card
+                                        className={`flex flex-col card-hover overflow-hidden border-border/50 cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
+                                    >
+                                        <div className="aspect-video w-full bg-muted overflow-hidden relative group">
+                                            {item.image_url ? (
+                                                <img
+                                                    src={item.image_url}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/50 font-medium">
+                                                    <span className="text-4xl mb-2 block animate-float">
+                                                        📸
+                                                    </span>
+                                                    No Image
+                                                </div>
+                                            )}
+                                            <div className="absolute top-3 right-3 glass px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+                                                ${item.price.toFixed(2)}
+                                            </div>
+                                            {item.shipping_cost ? (
+                                                <div className="absolute bottom-3 left-3 bg-primary/90 text-primary-foreground px-2 py-0.5 rounded text-xs font-medium">
+                                                    +$
+                                                    {item.shipping_cost.toFixed(
+                                                        2,
+                                                    )}{" "}
+                                                    shipping
+                                                </div>
+                                            ) : null}
+                                            {getCategoryName(
+                                                item.category_id,
+                                            ) && (
+                                                <div className="absolute top-3 left-3 glass px-2 py-0.5 rounded text-xs font-semibold">
+                                                    {getCategoryName(
+                                                        item.category_id,
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                    <div className="absolute top-3 right-3 glass px-3 py-1 rounded-full text-sm font-bold shadow-sm">
-                                        ${item.price.toFixed(2)}
-                                    </div>
-                                    {item.shipping_cost ? (
-                                        <div className="absolute bottom-3 left-3 bg-primary/90 text-primary-foreground px-2 py-0.5 rounded text-xs font-medium">
-                                            +${item.shipping_cost.toFixed(2)}{" "}
-                                            shipping
-                                        </div>
-                                    ) : null}
-                                </div>
 
-                                <CardContent className="p-5 flex-1 flex flex-col">
-                                    <h3 className="text-lg font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground flex-1 line-clamp-3 leading-relaxed">
-                                        {item.description ||
-                                            "No description provided."}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                                        <CardContent className="p-5 flex-1 flex flex-col">
+                                            <h3 className="text-lg font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                                                {item.title}
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground flex-1 line-clamp-3 leading-relaxed">
+                                                {item.description ||
+                                                    "No description provided."}
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
