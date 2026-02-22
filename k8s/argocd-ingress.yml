@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: argocd-server-ingress
+    namespace: argocd # Adjust if your ArgoCD is in a different namespace (e.g., 'default')
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+    tls:
+        - hosts:
+              - argo.celianhamon.fr
+          secretName: argocd-tls
+    rules:
+        - host: argo.celianhamon.fr
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: argocd-server
+                            port:
+                                name: http # or number: 80

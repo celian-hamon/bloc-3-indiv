@@ -56,13 +56,18 @@ spec:
                 app: traefik
         spec:
             serviceAccountName: traefik
+            volumes:
+                - name: config
+                  configMap:
+                      name: traefik-dynamic-config
             containers:
                 - name: traefik
                   image: traefik:v3.0
                   args:
                       - "--ping=true"
                       - "--providers.kubernetesingress"
-                      - "--providers.kubernetesingress.namespaces=collector"
+                      - "--providers.kubernetesingress.namespaces=collector,argocd,default"
+                      - "--providers.kubernetesingress.ingressendpoint.publishedservice=collector/traefik"
                       - "--entrypoints.web.address=:80"
                       - "--entrypoints.websecure.address=:443"
                       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
@@ -71,6 +76,10 @@ spec:
                       - "--metrics.prometheus=true"
                       - "--metrics.prometheus.entrypoint=metrics"
                       - "--entrypoints.metrics.address=:8082"
+                      - "--providers.file.filename=/config/dynamic.yml"
+                  volumeMounts:
+                      - name: config
+                        mountPath: /config
                   ports:
                       - name: web
                         containerPort: 80
@@ -117,3 +126,16 @@ spec:
         - name: metrics
           port: 8082
           targetPort: 8082
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: traefik-dynamic-config
+    namespace: collector
+data:
+    dynamic.yml: |
+        tls:
+            options:
+                default:
+                    sniStrict: true
