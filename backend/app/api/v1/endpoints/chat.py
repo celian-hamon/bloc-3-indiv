@@ -1,4 +1,5 @@
-from typing import Any, List
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -50,16 +51,16 @@ async def create_or_get_conversation(
     return conversation
 
 
-@router.get("/conversations", response_model=List[schemas.Conversation])
+@router.get("/conversations", response_model=list[schemas.Conversation])
 async def list_conversations(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     query = select(models.Conversation).where(
-        (models.Conversation.buyer_id == current_user.id) | 
+        (models.Conversation.buyer_id == current_user.id) |
         (models.Conversation.seller_id == current_user.id)
     ).options(selectinload(models.Conversation.messages))
-    
+
     result = await db.execute(query)
     return result.scalars().all()
 
@@ -73,7 +74,7 @@ async def get_conversation(
     query = select(models.Conversation).where(
         models.Conversation.id == conversation_id
     ).options(selectinload(models.Conversation.messages))
-    
+
     result = await db.execute(query)
     conversation = result.scalar_one_or_none()
 
@@ -142,10 +143,13 @@ async def mock_checkout(
     system_msg = models.Message(
         conversation_id=conversation.id,
         sender_id=conversation.seller_id,
-        content=f"🛍️ AUTOMATED MESSAGE: Buyer just purchased this item for ${article.price + (article.shipping_cost or 0)}"
+        content=(
+            f"🛍️ AUTOMATED MESSAGE: Buyer just purchased this item "
+            f"for ${article.price + (article.shipping_cost or 0)}"
+        )
     )
     db.add(system_msg)
-    
+
     # We could delete the item, or maybe better, add a field or just leave it for the demo
     # We'll just delete the article to mock it being 'bought / removed' from catalog
     await db.delete(article)

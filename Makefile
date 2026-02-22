@@ -41,16 +41,16 @@ coverage:
 	cd backend && pytest tests/ -v --cov=app --cov-report=term-missing
 
 lint:
-	cd backend && python -m ruff check app/ tests/
+	cd backend && python3 -m ruff check app/ tests/
 
 lint-fix:
-	cd backend && python -m ruff check app/ tests/ --fix
+	cd backend && python3 -m ruff check app/ tests/ --fix
 
 format:
-	cd backend && python -m ruff format app/ tests/
+	cd backend && python3 -m ruff format app/ tests/
 
 format-check:
-	cd backend && python -m ruff format --check app/ tests/
+	cd backend && python3 -m ruff format --check app/ tests/
 
 security:
 	cd backend && pip-audit -r requirements.txt

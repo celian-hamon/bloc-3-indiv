@@ -1,0 +1,6 @@
+echo "Running backend lint & format..."
+make lint
+make format-check
+
+echo "Running frontend lint..."
+cd frontend && npm run lint

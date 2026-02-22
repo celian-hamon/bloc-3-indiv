@@ -1,0 +1,24 @@
+{
+  "name": "bloc-3-indiv",
+  "version": "1.0.0",
+  "description": "Simple implementation of the Collector API project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/celian-hamon/bloc-3-indiv.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/celian-hamon/bloc-3-indiv/issues"
+  },
+  "homepage": "https://github.com/celian-hamon/bloc-3-indiv#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

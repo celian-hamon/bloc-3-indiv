@@ -5,3 +5,4 @@ guidelines/
 jmeter/results.jtl
 jmeter/report/
 jmeter.log
+nodes_modules
