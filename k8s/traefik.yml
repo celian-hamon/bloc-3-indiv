@@ -66,7 +66,7 @@ spec:
                   args:
                       - "--ping=true"
                       - "--providers.kubernetesingress"
-                      - "--providers.kubernetesingress.namespaces=collector,argocd,default"
+                      - "--providers.kubernetesingress.namespaces=collector,deploy,default"
                       - "--providers.kubernetesingress.ingressendpoint.publishedservice=collector/traefik"
                       - "--entrypoints.web.address=:80"
                       - "--entrypoints.websecure.address=:443"

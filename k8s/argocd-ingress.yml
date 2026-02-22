@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
     name: argocd-server-ingress
-    namespace: argocd # Adjust if your ArgoCD is in a different namespace (e.g., 'default')
+    namespace: deploy
     annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
