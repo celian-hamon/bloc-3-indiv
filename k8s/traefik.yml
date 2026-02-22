@@ -140,4 +140,4 @@ data:
         tls:
             options:
                 default:
-                    sniStrict: true
+                    sniStrict: false
