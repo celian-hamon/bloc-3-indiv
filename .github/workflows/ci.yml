@@ -31,6 +31,30 @@ jobs:
               working-directory: ./backend
               run: ruff format --check app/ tests/
 
+    frontend-quality:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+                  cache-dependency-path: frontend/package-lock.json
+
+            - name: Install dependencies
+              working-directory: ./frontend
+              run: npm ci
+
+            - name: Type Check (TypeScript)
+              working-directory: ./frontend
+              run: npm run build
+
+            - name: Lint Rules (ESLint)
+              working-directory: ./frontend
+              run: npm run lint
+
     # ──────────────────────────────────────────────
     # Stage 2 — Security scan (DevSecOps)
     # ──────────────────────────────────────────────
@@ -108,7 +132,7 @@ jobs:
     # ──────────────────────────────────────────────
     build:
         runs-on: ubuntu-latest
-        needs: [security, test]
+        needs: [security, test, frontend-quality]
         steps:
             - uses: actions/checkout@v4
 
@@ -149,10 +173,10 @@ jobs:
               run: |
                   API_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
                   FRONT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend"
-                  
+
                   docker build -t $API_IMAGE:${{ github.sha }} -t $API_IMAGE:latest ./backend
                   docker push $API_IMAGE --all-tags
-                  
+
                   docker build -t $FRONT_IMAGE:${{ github.sha }} -t $FRONT_IMAGE:latest ./frontend
                   docker push $FRONT_IMAGE --all-tags
 
@@ -160,12 +184,12 @@ jobs:
               run: |
                   API_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
                   FRONT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend"
-                  
+
                   # Update APIs manifest
                   sed -i "s|image: $API_IMAGE:.*|image: $API_IMAGE:${{ github.sha }}|g" k8s/app.yml
                   sed -i "s|image: collector-api:latest|image: $API_IMAGE:${{ github.sha }}|g" k8s/app.yml
                   sed -i "s|imagePullPolicy: Never|imagePullPolicy: Always|g" k8s/app.yml
-                  
+
                   # Update Frontend manifest
                   sed -i "s|image: $FRONT_IMAGE:.*|image: $FRONT_IMAGE:${{ github.sha }}|g" k8s/frontend.yml
                   sed -i "s|image: collector-frontend:latest|image: $FRONT_IMAGE:${{ github.sha }}|g" k8s/frontend.yml
