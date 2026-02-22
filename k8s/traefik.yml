@@ -77,6 +77,8 @@ spec:
                       - "--metrics.prometheus.entrypoint=metrics"
                       - "--entrypoints.metrics.address=:8082"
                       - "--providers.file.filename=/config/dynamic.yml"
+                      - "--providers.kubernetesingress.allowexternalnameservices=true"
+                      - "--serverstransport.insecureskipverify=true"
                   volumeMounts:
                       - name: config
                         mountPath: /config
