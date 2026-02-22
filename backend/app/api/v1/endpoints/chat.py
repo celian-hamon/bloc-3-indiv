@@ -28,10 +28,11 @@ async def create_or_get_conversation(
         raise HTTPException(status_code=400, detail="Sellers cannot start a conversation with themselves")
 
     # Check if conversation already exists
-    query = select(models.Conversation).where(
-        models.Conversation.article_id == article.id,
-        models.Conversation.buyer_id == current_user.id
-    ).options(selectinload(models.Conversation.messages))
+    query = (
+        select(models.Conversation)
+        .where(models.Conversation.article_id == article.id, models.Conversation.buyer_id == current_user.id)
+        .options(selectinload(models.Conversation.messages))
+    )
     result = await db.execute(query)
     conversation = result.scalar_one_or_none()
 
@@ -40,10 +41,7 @@ async def create_or_get_conversation(
 
     # Create new conversation
     conversation = models.Conversation(
-        article_id=article.id,
-        buyer_id=current_user.id,
-        seller_id=article.seller_id,
-        messages=[]
+        article_id=article.id, buyer_id=current_user.id, seller_id=article.seller_id, messages=[]
     )
     db.add(conversation)
     await db.commit()
@@ -56,10 +54,11 @@ async def list_conversations(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
-    query = select(models.Conversation).where(
-        (models.Conversation.buyer_id == current_user.id) |
-        (models.Conversation.seller_id == current_user.id)
-    ).options(selectinload(models.Conversation.messages))
+    query = (
+        select(models.Conversation)
+        .where((models.Conversation.buyer_id == current_user.id) | (models.Conversation.seller_id == current_user.id))
+        .options(selectinload(models.Conversation.messages))
+    )
 
     result = await db.execute(query)
     return result.scalars().all()
@@ -71,9 +70,11 @@ async def get_conversation(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
-    query = select(models.Conversation).where(
-        models.Conversation.id == conversation_id
-    ).options(selectinload(models.Conversation.messages))
+    query = (
+        select(models.Conversation)
+        .where(models.Conversation.id == conversation_id)
+        .options(selectinload(models.Conversation.messages))
+    )
 
     result = await db.execute(query)
     conversation = result.scalar_one_or_none()
@@ -101,11 +102,7 @@ async def create_message(
     if conversation.buyer_id != current_user.id and conversation.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    message = models.Message(
-        conversation_id=conversation.id,
-        sender_id=current_user.id,
-        content=message_in.content
-    )
+    message = models.Message(conversation_id=conversation.id, sender_id=current_user.id, content=message_in.content)
     db.add(message)
     await db.commit()
     await db.refresh(message)
@@ -136,6 +133,7 @@ async def mock_checkout(
     # In a real app we'd trigger a stripe session here and wait for a webhook.
     # For now, simulate absolute success and mark the article as sold (delete it for mocking simplicity).
     import uuid
+
     tx_id = f"pi_mock_{uuid.uuid4().hex[:12]}"
 
     # add a message from "system" saying it was purchased
@@ -144,9 +142,8 @@ async def mock_checkout(
         conversation_id=conversation.id,
         sender_id=conversation.seller_id,
         content=(
-            f"🛍️ AUTOMATED MESSAGE: Buyer just purchased this item "
-            f"for ${article.price + (article.shipping_cost or 0)}"
-        )
+            f"🛍️ AUTOMATED MESSAGE: Buyer just purchased this item for ${article.price + (article.shipping_cost or 0)}"
+        ),
     )
     db.add(system_msg)
 
@@ -155,8 +152,4 @@ async def mock_checkout(
     await db.delete(article)
     await db.commit()
 
-    return {
-        "amount": article.price + (article.shipping_cost or 0),
-        "success": True,
-        "transaction_id": tx_id
-    }
+    return {"amount": article.price + (article.shipping_cost or 0), "success": True, "transaction_id": tx_id}
