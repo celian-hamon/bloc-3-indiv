@@ -17,7 +17,7 @@ spec:
         spec:
             containers:
                 - name: collector-api
-                  image: rg.fr-par.scw.cloud/bloc-3-indiv/collector-api:75b15828fff65c8a5bba92c08fcba3b2b07f0c79
+                  image: rg.fr-par.scw.cloud/bloc-3-indiv/collector-api:335a4e80a06500d7d569efadca87f24b22615fe0
                   imagePullPolicy: Always # Use local Minikube image
                   ports:
                       - containerPort: 8000
