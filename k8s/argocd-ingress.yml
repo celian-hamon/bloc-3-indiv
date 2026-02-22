@@ -5,7 +5,7 @@ metadata:
     namespace: collector
 spec:
     type: ExternalName
-    externalName: argocd-server.deploy.svc.cluster.local
+    externalName: argocd-server.default.svc.cluster.local
     ports:
         - name: http
           port: 80
