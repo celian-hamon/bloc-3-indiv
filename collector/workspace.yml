@@ -5,7 +5,7 @@ info:
 
 collections:
   - name: "Collector API"
-    path: "../bruno"
+    path: "../backend/bruno"
 
 specs:
 

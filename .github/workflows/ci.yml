@@ -24,9 +24,11 @@ jobs:
               run: pip install ruff
 
             - name: Lint
+              working-directory: ./backend
               run: ruff check app/ tests/
 
             - name: Format check
+              working-directory: ./backend
               run: ruff format --check app/ tests/
 
     # ──────────────────────────────────────────────
@@ -44,11 +46,13 @@ jobs:
                   python-version: "3.11"
 
             - name: Install dependencies
+              working-directory: ./backend
               run: |
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
 
             - name: Security audit (pip-audit)
+              working-directory: ./backend
               continue-on-error: true
               run: pip-audit -r requirements.txt --desc --output audit-report.txt
 
@@ -57,7 +61,7 @@ jobs:
               if: always()
               with:
                   name: security-audit
-                  path: audit-report.txt
+                  path: backend/audit-report.txt
 
     # ──────────────────────────────────────────────
     # Stage 3 — Tests (unit + integration)
@@ -74,6 +78,7 @@ jobs:
                   python-version: "3.11"
 
             - name: Install dependencies
+              working-directory: ./backend
               run: |
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
@@ -81,11 +86,13 @@ jobs:
                   SQLALCHEMY_DATABASE_URI: "sqlite+aiosqlite:///:memory:"
 
             - name: Run unit tests
+              working-directory: ./backend
               run: pytest tests/test_fraud.py -v
               env:
                   SQLALCHEMY_DATABASE_URI: "sqlite+aiosqlite:///:memory:"
 
             - name: Run integration tests with coverage
+              working-directory: ./backend
               run: pytest tests/ -v --cov=app --cov-report=term-missing --cov-report=xml
               env:
                   SQLALCHEMY_DATABASE_URI: "sqlite+aiosqlite:///:memory:"
@@ -94,7 +101,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: coverage-report
-                  path: coverage.xml
+                  path: backend/coverage.xml
 
     # ──────────────────────────────────────────────
     # Stage 4 — Docker build validation
@@ -105,11 +112,17 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Build Docker image
-              run: docker build -t collector-api:${{ github.sha }} .
+            - name: Build Backend Docker image
+              run: docker build -t collector-api:${{ github.sha }} ./backend
 
-            - name: Verify image
+            - name: Verify Backend image
               run: docker image inspect collector-api:${{ github.sha }}
+
+            - name: Build Frontend Docker image
+              run: docker build -t collector-frontend:${{ github.sha }} ./frontend
+
+            - name: Verify Frontend image
+              run: docker image inspect collector-frontend:${{ github.sha }}
 
     # ──────────────────────────────────────────────
     # Stage 5 — Update Manifests for Argo CD (GitOps)
@@ -132,25 +145,36 @@ jobs:
                   username: nologin
                   password: ${{ secrets.SCW_SECRET_KEY }}
 
-            - name: Build and push Docker image
+            - name: Build and push Docker images
               run: |
-                  # NOTE: Make sure to replace 'my-namespace' with your actual SCW Container Registry namespace
-                  IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
-                  docker build -t $IMAGE:${{ github.sha }} -t $IMAGE:latest .
-                  docker push $IMAGE --all-tags
+                  API_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
+                  FRONT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend"
+                  
+                  docker build -t $API_IMAGE:${{ github.sha }} -t $API_IMAGE:latest ./backend
+                  docker push $API_IMAGE --all-tags
+                  
+                  docker build -t $FRONT_IMAGE:${{ github.sha }} -t $FRONT_IMAGE:latest ./frontend
+                  docker push $FRONT_IMAGE --all-tags
 
             - name: Update Kubernetes manifests
               run: |
-                  IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
-                  # Update image in manifests dynamically to use the freshly built image
-                  sed -i "s|image: collector-api:latest|image: $IMAGE:${{ github.sha }}|g" k8s/app.yml
-                  # Remove 'imagePullPolicy: Never' so Kapsule will pull the image from the registry
+                  API_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
+                  FRONT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend"
+                  
+                  # Update APIs manifest
+                  sed -i "s|image: $API_IMAGE:.*|image: $API_IMAGE:${{ github.sha }}|g" k8s/app.yml
+                  sed -i "s|image: collector-api:latest|image: $API_IMAGE:${{ github.sha }}|g" k8s/app.yml
                   sed -i "s|imagePullPolicy: Never|imagePullPolicy: Always|g" k8s/app.yml
+                  
+                  # Update Frontend manifest
+                  sed -i "s|image: $FRONT_IMAGE:.*|image: $FRONT_IMAGE:${{ github.sha }}|g" k8s/frontend.yml
+                  sed -i "s|image: collector-frontend:latest|image: $FRONT_IMAGE:${{ github.sha }}|g" k8s/frontend.yml
+                  sed -i "s|imagePullPolicy: Never|imagePullPolicy: Always|g" k8s/frontend.yml
 
             - name: Commit and push changes
               run: |
                   git config --global user.name "github-actions[bot]"
                   git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                  git add k8s/app.yml
+                  git add k8s/app.yml k8s/frontend.yml
                   # Commit and push if there are changes
-                  git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update image to ${{ github.sha }} for Argo CD" && git push)
+                  git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update images to ${{ github.sha }} for Argo CD" && git push)
