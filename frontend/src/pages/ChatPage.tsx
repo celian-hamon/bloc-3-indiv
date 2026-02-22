@@ -112,6 +112,48 @@ export const ChatPage = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [activeConv?.messages]);
 
+    useEffect(() => {
+        if (!activeConv || !user) return;
+
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Convert the REST API endpoints directly over to active WebSockets
+        const baseUrl = api.defaults.baseURL || "https://celianhamon.fr/api/v1";
+        const wsUrl = `${baseUrl.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${activeConv.id}/ws?token=${token}`;
+
+        const ws = new WebSocket(wsUrl);
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+
+                setActiveConv((prev) => {
+                    if (!prev || prev.id !== activeConv.id) return prev;
+                    // Detect duplicates from our own immediate POST returns
+                    if (prev.messages.some((m) => m.id === data.id))
+                        return prev;
+
+                    const updated = {
+                        ...prev,
+                        messages: [...prev.messages, data],
+                    };
+
+                    // Recursively map global conversations tree UI block
+                    setConversations((convi) =>
+                        convi.map((c) => (c.id === updated.id ? updated : c)),
+                    );
+
+                    return updated;
+                });
+            } catch (err) {
+                console.error("Socket error", err);
+            }
+        };
+
+        return () => ws.close();
+    }, [activeConv?.id, user]);
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeConv) return;

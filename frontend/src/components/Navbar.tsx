@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "./ui/button";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Navbar = () => {
     const { user, logout } = useAuth();
+    const { t, i18n } = useTranslation();
+
+    const toggleLanguage = () => {
+        const nextLang = i18n.language.startsWith("fr") ? "en" : "fr";
+        i18n.changeLanguage(nextLang);
+    };
 
     return (
         <nav className="w-full h-16 border-b border-border glass flex items-center justify-between px-6 md:px-12 fixed top-0 z-50 transition-all-smooth">
@@ -22,7 +29,7 @@ export const Navbar = () => {
                         asChild
                         className="transition-all-smooth"
                     >
-                        <Link to="/">Catalog</Link>
+                        <Link to="/">{t("nav.catalog")}</Link>
                     </Button>
                     <Button
                         variant="ghost"
@@ -30,12 +37,21 @@ export const Navbar = () => {
                         asChild
                         className="transition-all-smooth"
                     >
-                        <Link to="/showcase">About</Link>
+                        <Link to="/showcase">{t("nav.about")}</Link>
                     </Button>
                 </div>
             </div>
 
             <div className="flex items-center gap-3">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleLanguage}
+                    className="w-8 h-8 rounded-full"
+                    title="Toggle Language"
+                >
+                    <Globe className="w-4 h-4" />
+                </Button>
                 {user ? (
                     <>
                         <Button
@@ -82,7 +98,7 @@ export const Navbar = () => {
                                 asChild
                                 className="transition-all-smooth hover:scale-105"
                             >
-                                <Link to="/new">+ List Item</Link>
+                                <Link to="/new">{t("nav.list_item")}</Link>
                             </Button>
                         )}
                         {user.role === "admin" && (
@@ -92,7 +108,7 @@ export const Navbar = () => {
                                 asChild
                                 className="transition-all-smooth"
                             >
-                                <Link to="/admin">Admin</Link>
+                                <Link to="/admin">{t("nav.admin")}</Link>
                             </Button>
                         )}
                         <Button
@@ -101,7 +117,7 @@ export const Navbar = () => {
                             onClick={logout}
                             className="transition-all-smooth text-muted-foreground hover:text-destructive"
                         >
-                            Log out
+                            {t("nav.logout")}
                         </Button>
                     </>
                 ) : (
@@ -112,14 +128,14 @@ export const Navbar = () => {
                             asChild
                             className="transition-all-smooth"
                         >
-                            <Link to="/login">Sign in</Link>
+                            <Link to="/login">{t("nav.signin")}</Link>
                         </Button>
                         <Button
                             size="sm"
                             asChild
                             className="transition-all-smooth hover:scale-105"
                         >
-                            <Link to="/register">Sign up</Link>
+                            <Link to="/register">{t("nav.signup")}</Link>
                         </Button>
                     </>
                 )}

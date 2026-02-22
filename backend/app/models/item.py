@@ -19,4 +19,4 @@ class Article(Base):
     seller_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     category = relationship("Category", backref="articles")
-    seller = relationship("User", backref="articles")
+    seller = relationship("User", backref="articles", lazy="selectin")

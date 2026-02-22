@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -10,6 +10,31 @@ from app.api import deps
 from app.db.session import get_db
 
 router = APIRouter()
+
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[int, list[WebSocket]] = {}
+
+    async def connect(self, ws: WebSocket, conv_id: int):
+        await ws.accept()
+        if conv_id not in self.active_connections:
+            self.active_connections[conv_id] = []
+        self.active_connections[conv_id].append(ws)
+
+    def disconnect(self, ws: WebSocket, conv_id: int):
+        if conv_id in self.active_connections and ws in self.active_connections[conv_id]:
+            self.active_connections[conv_id].remove(ws)
+            if not self.active_connections[conv_id]:
+                del self.active_connections[conv_id]
+
+    async def broadcast_message(self, message: str, conv_id: int):
+        if conv_id in self.active_connections:
+            for connection in self.active_connections[conv_id]:
+                await connection.send_text(message)
+
+
+manager = ConnectionManager()
 
 
 @router.post("/conversations", response_model=schemas.Conversation)
@@ -88,6 +113,43 @@ async def get_conversation(
     return conversation
 
 
+@router.websocket("/conversations/{conversation_id}/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    conversation_id: int,
+    token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    from jose import jwt
+
+    from app.core.config import settings
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = int(payload.sub)
+    except Exception:
+        await websocket.close(code=1008)
+        return
+
+    # Check permissions
+    conversation = await db.get(models.Conversation, conversation_id)
+    if not conversation:
+        await websocket.close(code=1008)
+        return
+    if conversation.buyer_id != user_id and conversation.seller_id != user_id and user_id != 1:  # Simple check
+        await websocket.close(code=1008)
+        return
+
+    await manager.connect(websocket, conversation_id)
+    try:
+        while True:
+            # We don't really expect clients to send messages via WS directly,
+            # but we keep connection open and listen.
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, conversation_id)
+
+
 @router.post("/conversations/{conversation_id}/messages", response_model=schemas.Message)
 async def create_message(
     conversation_id: int,
@@ -106,6 +168,10 @@ async def create_message(
     db.add(message)
     await db.commit()
     await db.refresh(message)
+
+    msg_schema = schemas.Message.model_validate(message)
+    await manager.broadcast_message(msg_schema.model_dump_json(), conversation.id)
+
     return message
 
 
@@ -151,5 +217,9 @@ async def mock_checkout(
     # We'll just delete the article to mock it being 'bought / removed' from catalog
     await db.delete(article)
     await db.commit()
+    await db.refresh(system_msg)
+
+    msg_schema = schemas.Message.model_validate(system_msg)
+    await manager.broadcast_message(msg_schema.model_dump_json(), conversation.id)
 
     return {"amount": article.price + (article.shipping_cost or 0), "success": True, "transaction_id": tx_id}

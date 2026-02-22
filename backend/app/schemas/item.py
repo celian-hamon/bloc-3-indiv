@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from .user import User
+
 
 class ArticleBase(BaseModel):
     title: str | None = None
@@ -33,7 +35,7 @@ class ArticleInDBBase(ArticleBase):
 
 
 class Article(ArticleInDBBase):
-    pass
+    seller: User | None = None
 
 
 class ArticleInDB(ArticleInDBBase):

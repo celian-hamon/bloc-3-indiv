@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../lib/api";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -37,6 +38,7 @@ const getFirstImage = (url: string | null): string | null => {
 };
 
 export const HomePage = () => {
+    const { t } = useTranslation();
     const [items, setItems] = useState<Item[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<number | null>(
@@ -96,10 +98,10 @@ export const HomePage = () => {
             <div className="w-full max-w-6xl">
                 <div className="animate-fade-in mb-6">
                     <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-primary">
-                        Catalog
+                        {t("home.title")}
                     </h1>
                     <p className="text-muted-foreground text-lg">
-                        Browse items currently approved and available for sale.
+                        {t("home.subtitle")}
                     </p>
                 </div>
 
@@ -142,7 +144,7 @@ export const HomePage = () => {
                             onClick={() => setSelectedCategory(null)}
                             className="transition-all-smooth hover:scale-105"
                         >
-                            All
+                            {t("home.all_categories")}
                         </Button>
                         {categories.map((cat) => (
                             <Button
@@ -193,7 +195,7 @@ export const HomePage = () => {
                     <div className="text-center py-20 border-2 border-dashed border-muted rounded-xl bg-card animate-fade-in-up">
                         <div className="text-6xl mb-4 animate-float">📦</div>
                         <h3 className="text-2xl font-bold text-muted-foreground">
-                            No Items Found
+                            {t("home.no_items")}
                         </h3>
                         <p className="mt-2 text-muted-foreground/80">
                             {debouncedSearch

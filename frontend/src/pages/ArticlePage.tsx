@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Pencil } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -14,6 +14,12 @@ import {
 } from "../components/ui/carousel";
 import ReactMarkdown from "react-markdown";
 
+interface User {
+    id: number;
+    email: string;
+    full_name: string | null;
+}
+
 interface Article {
     id: number;
     title: string;
@@ -21,6 +27,7 @@ interface Article {
     price: number;
     image_url: string | null;
     seller_id: number;
+    seller?: User;
     is_approved: boolean;
     category_id: number | null;
     shipping_cost: number;
@@ -186,12 +193,8 @@ export const ArticlePage = () => {
                                                 </CarouselItem>
                                             ))}
                                         </CarouselContent>
-                                        <div className="absolute inset-y-0 left-0 flex items-center pl-4">
-                                            <CarouselPrevious className="relative left-0 translate-y-0 shadow-md bg-white border border-border text-foreground hover:bg-muted" />
-                                        </div>
-                                        <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-                                            <CarouselNext className="relative right-0 translate-y-0 shadow-md bg-white border border-border text-foreground hover:bg-muted" />
-                                        </div>
+                                        <CarouselPrevious className="left-4 shadow-md bg-white border border-border text-foreground hover:bg-muted" />
+                                        <CarouselNext className="right-4 shadow-md bg-white border border-border text-foreground hover:bg-muted" />
                                         {/* Pagination indicator dots */}
                                         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
                                             {images.map((_, i) => (
@@ -263,18 +266,35 @@ export const ArticlePage = () => {
                                     <span>Total</span>
                                     <span>${totalPrice.toFixed(2)}</span>
                                 </div>
-                                <div className="pt-2">
-                                    <Button
-                                        className="w-full gap-2 shadow-sm font-bold tracking-wide"
-                                        size="lg"
-                                        disabled={chatLoading}
-                                        onClick={handleChatClick}
-                                    >
-                                        <MessageSquare className="w-5 h-5" />
-                                        {chatLoading
-                                            ? "Loading..."
-                                            : "Chat & Buy"}
-                                    </Button>
+                                <div className="pt-2 flex flex-col gap-2">
+                                    {(!user ||
+                                        user.id !== article.seller_id) && (
+                                        <Button
+                                            className="w-full gap-2 shadow-sm font-bold tracking-wide"
+                                            size="lg"
+                                            disabled={chatLoading}
+                                            onClick={handleChatClick}
+                                        >
+                                            <MessageSquare className="w-5 h-5" />
+                                            {chatLoading
+                                                ? "Loading..."
+                                                : "Chat & Buy"}
+                                        </Button>
+                                    )}
+                                    {(user?.id === article.seller_id ||
+                                        user?.role === "admin") && (
+                                        <Button
+                                            className="w-full gap-2 shadow-sm font-bold tracking-wide transition-all-smooth"
+                                            size="lg"
+                                            variant="secondary"
+                                            onClick={() =>
+                                                navigate(`/edit/${article.id}`)
+                                            }
+                                        >
+                                            <Pencil className="w-5 h-5 -ml-1" />
+                                            Edit Item
+                                        </Button>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -294,13 +314,37 @@ export const ArticlePage = () => {
 
                         {/* Meta Info */}
                         <div className="grid grid-cols-2 gap-4 animate-fade-in-up stagger-4">
-                            <div className="rounded-lg border border-border/50 p-4">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                                    Seller
-                                </p>
-                                <p className="font-semibold">
-                                    #{article.seller_id}
-                                </p>
+                            <div className="rounded-lg border border-border/50 p-4 flex items-center gap-3">
+                                {article.seller ? (
+                                    <>
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                                            {(
+                                                article.seller.full_name ||
+                                                article.seller.email
+                                            )
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">
+                                                Seller
+                                            </p>
+                                            <p className="font-semibold truncate text-sm">
+                                                {article.seller.full_name ||
+                                                    article.seller.email}
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="min-w-0">
+                                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                                            Seller
+                                        </p>
+                                        <p className="font-semibold truncate">
+                                            #{article.seller_id}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                             <div className="rounded-lg border border-border/50 p-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">

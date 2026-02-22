@@ -5,6 +5,7 @@ import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { AddArticlePage } from "./pages/AddArticlePage";
+import { EditArticlePage } from "./pages/EditArticlePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { ShowcasePage } from "./pages/ShowcasePage";
@@ -53,6 +54,14 @@ function App() {
                                 element={
                                     <PrivateRoute>
                                         <AddArticlePage />
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route
+                                path="/edit/:id"
+                                element={
+                                    <PrivateRoute>
+                                        <EditArticlePage />
                                     </PrivateRoute>
                                 }
                             />
