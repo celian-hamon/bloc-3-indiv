@@ -67,6 +67,7 @@ spec:
                       - "--entrypoints.websecure.address=:443"
                       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
                       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+                      - "--entrypoints.websecure.http.tls=true"
                       - "--metrics.prometheus=true"
                       - "--metrics.prometheus.entrypoint=metrics"
                       - "--entrypoints.metrics.address=:8082"

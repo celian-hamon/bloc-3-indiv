@@ -12,3 +12,8 @@ spec:
             - http01:
                   ingress:
                       class: traefik
+                      ingressTemplate:
+                          metadata:
+                              annotations:
+                                  traefik.ingress.kubernetes.io/router.entrypoints: "web,websecure"
+                                  traefik.ingress.kubernetes.io/router.tls: "true"
