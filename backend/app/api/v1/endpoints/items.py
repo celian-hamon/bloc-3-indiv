@@ -29,9 +29,7 @@ async def list_articles(
         query = query.where(models.Article.category_id == category_id)
     if search:
         search_filter = f"%{search}%"
-        query = query.where(
-            models.Article.title.ilike(search_filter) | models.Article.description.ilike(search_filter)
-        )
+        query = query.where(models.Article.title.ilike(search_filter) | models.Article.description.ilike(search_filter))
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
@@ -62,12 +60,7 @@ async def list_my_articles(
     """
     List current user's own articles (including unapproved).
     """
-    query = (
-        select(models.Article)
-        .where(models.Article.seller_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-    )
+    query = select(models.Article).where(models.Article.seller_id == current_user.id).offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 
