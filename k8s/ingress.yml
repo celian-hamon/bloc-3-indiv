@@ -93,3 +93,30 @@ spec:
                             name: prometheus
                             port:
                                 number: 9090
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: frontend-ingress
+    namespace: collector
+    annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+    tls:
+        - hosts:
+              - app.celianhamon.fr
+          secretName: frontend-tls
+    rules:
+        - host: app.celianhamon.fr
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: frontend-svc
+                            port:
+                                number: 80

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: frontend-app
+    namespace: collector
+    labels:
+        app: frontend-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: frontend-app
+    template:
+        metadata:
+            labels:
+                app: frontend-app
+        spec:
+            containers:
+                - name: frontend-app
+                  image: rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend:2b6cbd3c92a6107a169cfdb06c8ea3c204c5388c
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: 80
+                  resources:
+                      requests:
+                          memory: "64Mi"
+                          cpu: "100m"
+                      limits:
+                          memory: "128Mi"
+                          cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: frontend-svc
+    namespace: collector
+spec:
+    type: ClusterIP
+    selector:
+        app: frontend-app
+    ports:
+        - port: 80
+          targetPort: 80

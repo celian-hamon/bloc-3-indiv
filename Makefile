@@ -32,28 +32,28 @@ clean:
 # Test & Quality
 # ─────────────────────────────────────────────
 test:
-	docker compose exec web pytest tests/ -v
+	docker compose exec web pytest . -v
 
 test-local:
-	pytest tests/ -v
+	cd backend && pytest tests/ -v
 
 coverage:
-	pytest tests/ -v --cov=app --cov-report=term-missing
+	cd backend && pytest tests/ -v --cov=app --cov-report=term-missing
 
 lint:
-	python -m ruff check app/ tests/
+	cd backend && python -m ruff check app/ tests/
 
 lint-fix:
-	python -m ruff check app/ tests/ --fix
+	cd backend && python -m ruff check app/ tests/ --fix
 
 format:
-	python -m ruff format app/ tests/
+	cd backend && python -m ruff format app/ tests/
 
 format-check:
-	python -m ruff format --check app/ tests/
+	cd backend && python -m ruff format --check app/ tests/
 
 security:
-	pip-audit -r requirements.txt
+	cd backend && pip-audit -r requirements.txt
 
 # ─────────────────────────────────────────────
 # All checks (mirrors CI pipeline)
@@ -67,7 +67,8 @@ minikube-start:
 	minikube status || minikube start
 
 minikube-build:
-	minikube image build -t collector-api:latest .
+	minikube image build -t collector-api:latest ./backend
+	minikube image build -t collector-frontend:latest ./frontend
 
 k8s-apply:
 	kubectl apply -f k8s/namespace.yml
@@ -75,8 +76,10 @@ k8s-apply:
 	kubectl apply -f k8s/secret.yml
 	kubectl apply -f k8s/postgres.yml
 	kubectl apply -f k8s/app.yml
+	kubectl apply -f k8s/frontend.yml
 
 k8s-delete:
+	kubectl delete -f k8s/frontend.yml --ignore-not-found
 	kubectl delete -f k8s/app.yml --ignore-not-found
 	kubectl delete -f k8s/postgres.yml --ignore-not-found
 	kubectl delete -f k8s/secret.yml --ignore-not-found
@@ -96,7 +99,7 @@ tls-generate:
 	openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 		-keyout k8s/tls.key -out k8s/tls.crt \
 		-subj "/CN=collector.local" \
-		-addext "subjectAltName=DNS:collector.local,DNS:grafana.collector.local,DNS:prometheus.collector.local"
+		-addext "subjectAltName=DNS:collector.local,DNS:grafana.collector.local,DNS:prometheus.collector.local,DNS:app.celianhamon.fr"
 	kubectl create secret tls collector-tls \
 		--cert=k8s/tls.crt --key=k8s/tls.key \
 		-n collector --dry-run=client -o yaml | kubectl apply -f -
@@ -156,6 +159,7 @@ destroy-all:
 	kubectl delete -f k8s/grafana.yml --ignore-not-found
 	kubectl delete -f k8s/grafana-dashboards.yml --ignore-not-found
 	kubectl delete -f k8s/prometheus.yml --ignore-not-found
+	kubectl delete -f k8s/frontend.yml --ignore-not-found
 	kubectl delete -f k8s/app.yml --ignore-not-found
 	kubectl delete -f k8s/postgres.yml --ignore-not-found
 	kubectl delete -f k8s/secret.yml --ignore-not-found
