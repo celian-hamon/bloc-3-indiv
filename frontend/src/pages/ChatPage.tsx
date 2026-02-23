@@ -4,12 +4,13 @@ import api from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Send, ShoppingBag, MessageSquare } from "lucide-react";
+import { Send, ShoppingBag, MessageSquare, Paperclip, X } from "lucide-react";
 
 interface Message {
     id: number;
     content: string;
     sender_id: number;
+    file_url?: string | null;
     created_at: string;
 }
 
@@ -57,7 +58,8 @@ export const ChatPage = () => {
     const [newMessage, setNewMessage] = useState("");
     const [loading, setLoading] = useState(true);
     const [buying, setBuying] = useState(false);
-
+    const [fileUrl, setFileUrl] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const loadConversations = async () => {
@@ -156,13 +158,14 @@ export const ChatPage = () => {
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !activeConv) return;
+        if ((!newMessage.trim() && !fileUrl) || !activeConv) return;
 
         try {
             const res = await api.post<Message>(
                 `/chat/conversations/${activeConv.id}/messages`,
                 {
                     content: newMessage,
+                    file_url: fileUrl,
                 },
             );
             const updated = {
@@ -176,9 +179,22 @@ export const ChatPage = () => {
                 ),
             );
             setNewMessage("");
+            setFileUrl(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         } catch {
             console.error("Failed to send message");
         }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            setFileUrl(evt.target?.result as string);
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleCheckout = async () => {
@@ -346,9 +362,40 @@ export const ChatPage = () => {
                                                           : "bg-muted text-foreground rounded-tl-sm shadow-sm"
                                                 }`}
                                             >
-                                                <p className="whitespace-pre-wrap text-sm">
-                                                    {msg.content}
-                                                </p>
+                                                {msg.file_url && (
+                                                    <div className="mb-2">
+                                                        {msg.file_url.startsWith(
+                                                            "data:image/",
+                                                        ) ? (
+                                                            <img
+                                                                src={
+                                                                    msg.file_url
+                                                                }
+                                                                alt="Attachment"
+                                                                className="max-w-full max-h-[300px] object-contain rounded-md"
+                                                            />
+                                                        ) : (
+                                                            <a
+                                                                href={
+                                                                    msg.file_url
+                                                                }
+                                                                download="attachment"
+                                                                className="underline flex items-center gap-1 text-sm font-medium opacity-90 hover:opacity-100"
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                            >
+                                                                <Paperclip className="w-3 h-3" />
+                                                                Download
+                                                                Attachment
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {msg.content && (
+                                                    <p className="whitespace-pre-wrap text-sm">
+                                                        {msg.content}
+                                                    </p>
+                                                )}
                                                 {!isSystem && (
                                                     <p className="text-[10px] opacity-70 mt-1 text-right">
                                                         {new Date(
@@ -370,11 +417,61 @@ export const ChatPage = () => {
                             <div ref={messagesEndRef} />
                         </div>
 
+                        {/* Attachment Preview */}
+                        {fileUrl && (
+                            <div className="px-4 py-2 bg-muted/20 border-t flex items-center gap-3">
+                                <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted border flex items-center justify-center shrink-0">
+                                    {fileUrl.startsWith("data:image/") ? (
+                                        <img
+                                            src={fileUrl}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <Paperclip className="w-6 h-6 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <div className="flex-1 text-sm text-muted-foreground truncate">
+                                    {fileUrl.startsWith("data:image/")
+                                        ? "Image attached"
+                                        : "File attached"}
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                                    onClick={() => {
+                                        setFileUrl(null);
+                                        if (fileInputRef.current)
+                                            fileInputRef.current.value = "";
+                                    }}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        )}
+
                         {/* Chat Input */}
                         <form
                             onSubmit={handleSend}
-                            className="p-3 bg-muted/30 border-t flex gap-2"
+                            className="p-3 bg-muted/30 border-t flex gap-2 items-center"
                         >
+                            <input
+                                type="file"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                accept="image/*,.pdf,.doc,.docx,.txt"
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 text-muted-foreground"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <Paperclip className="w-5 h-5" />
+                            </Button>
                             <Input
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
@@ -383,8 +480,8 @@ export const ChatPage = () => {
                             />
                             <Button
                                 type="submit"
-                                disabled={!newMessage.trim()}
-                                className="shadow-sm"
+                                disabled={!newMessage.trim() && !fileUrl}
+                                className="shadow-sm shrink-0"
                             >
                                 <Send className="w-4 h-4" />
                             </Button>

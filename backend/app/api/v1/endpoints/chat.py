@@ -164,7 +164,12 @@ async def create_message(
     if conversation.buyer_id != current_user.id and conversation.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    message = models.Message(conversation_id=conversation.id, sender_id=current_user.id, content=message_in.content)
+    message = models.Message(
+        conversation_id=conversation.id,
+        sender_id=current_user.id,
+        content=message_in.content or "",
+        file_url=message_in.file_url
+    )
     db.add(message)
     await db.commit()
     await db.refresh(message)
