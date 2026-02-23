@@ -168,7 +168,7 @@ async def create_message(
         conversation_id=conversation.id,
         sender_id=current_user.id,
         content=message_in.content or "",
-        file_url=message_in.file_url
+        file_url=message_in.file_url,
     )
     db.add(message)
     await db.commit()
