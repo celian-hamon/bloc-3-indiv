@@ -122,8 +122,8 @@ export const ChatPage = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        // Convert the REST API endpoints directly over to active WebSockets
-        const wsUrl = `${CHAT_BASE_URL.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${activeConv.id}/ws?token=${token}`;
+        const convId = activeConv.id;
+        const wsUrl = `${CHAT_BASE_URL.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${convId}/ws?token=${token}`;
 
         const ws = new WebSocket(wsUrl);
 
@@ -132,7 +132,7 @@ export const ChatPage = () => {
                 const data = JSON.parse(event.data);
 
                 setActiveConv((prev) => {
-                    if (!prev || prev.id !== activeConv.id) return prev;
+                    if (!prev || prev.id !== convId) return prev;
                     // Detect duplicates from our own immediate POST returns
                     if (prev.messages.some((m) => m.id === data.id))
                         return prev;
