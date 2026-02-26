@@ -206,6 +206,13 @@ async def create_message(
         content=message_in.content or "",
         file_url=message_in.file_url,
     )
+
+    article = await db.get(models.Article, conversation.article_id)
+    if article and article.is_sold:
+        raise HTTPException(
+            status_code=403, detail="Item already sold. Chat is disabled."
+        )
+
     db.add(message)
     await db.commit()
     await db.refresh(message)

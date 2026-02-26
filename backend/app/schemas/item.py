@@ -29,6 +29,7 @@ class ArticleInDBBase(ArticleBase):
     id: int
     seller_id: int
     is_approved: bool = False
+    is_sold: bool = False
 
     class Config:
         from_attributes = True

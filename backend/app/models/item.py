@@ -14,6 +14,7 @@ class Article(Base):
     shipping_cost = Column(Float, default=0.0)
     image_url = Column(String, nullable=True)
     is_approved = Column(Boolean, default=False)
+    is_sold = Column(Boolean, default=False)
 
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     seller_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -24,7 +24,7 @@ async def list_articles(
     Browse the catalog. Public endpoint — no authentication required.
     Only returns approved articles. Supports category and text search filtering.
     """
-    query = select(models.Article).where(models.Article.is_approved == True)
+    query = select(models.Article).where(models.Article.is_approved == True, models.Article.is_sold == False)
     if category_id:
         query = query.where(models.Article.category_id == category_id)
     if search:

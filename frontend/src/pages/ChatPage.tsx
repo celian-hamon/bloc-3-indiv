@@ -21,6 +21,7 @@ interface Conversation {
     seller_id: number;
     created_at: string;
     messages: Message[];
+    article_is_sold?: boolean;
 }
 
 interface ExternalArticle {
@@ -30,6 +31,7 @@ interface ExternalArticle {
     shipping_cost: number;
     image_url: string | null;
     is_approved: boolean;
+    is_sold: boolean;
 }
 
 const getFirstImage = (url: string | null): string | null => {
@@ -325,11 +327,20 @@ export const ChatPage = () => {
                                         onClick={handleCheckout}
                                         disabled={
                                             buying ||
-                                            !articleData[activeConv.article_id]
+                                            !articleData[
+                                                activeConv.article_id
+                                            ] ||
+                                            articleData[activeConv.article_id]
+                                                .is_sold
                                         }
                                     >
                                         <ShoppingBag className="w-4 h-4 mr-2" />
-                                        {buying ? "Processing..." : "Buy Now"}
+                                        {buying
+                                            ? "Processing..."
+                                            : articleData[activeConv.article_id]
+                                                    ?.is_sold
+                                              ? "Item Sold"
+                                              : "Buy Now"}
                                     </Button>
                                 )}
                             </div>
@@ -453,40 +464,50 @@ export const ChatPage = () => {
                         )}
 
                         {/* Chat Input */}
-                        <form
-                            onSubmit={handleSend}
-                            className="p-3 bg-muted/30 border-t flex gap-2 items-center"
-                        >
-                            <input
-                                type="file"
-                                className="hidden"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                                accept="image/*,.pdf,.doc,.docx,.txt"
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="shrink-0 text-muted-foreground"
-                                onClick={() => fileInputRef.current?.click()}
+                        {articleData[activeConv.article_id]?.is_sold ? (
+                            <div className="p-4 bg-muted text-center text-sm font-medium text-muted-foreground border-t">
+                                This item has been sold. Chat is now disabled.
+                            </div>
+                        ) : (
+                            <form
+                                onSubmit={handleSend}
+                                className="p-3 bg-muted/30 border-t flex gap-2 items-center"
                             >
-                                <Paperclip className="w-5 h-5" />
-                            </Button>
-                            <Input
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder="Type a message..."
-                                className="flex-1 shadow-sm"
-                            />
-                            <Button
-                                type="submit"
-                                disabled={!newMessage.trim() && !fileUrl}
-                                className="shadow-sm shrink-0"
-                            >
-                                <Send className="w-4 h-4" />
-                            </Button>
-                        </form>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept="image/*,.pdf,.doc,.docx,.txt"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 text-muted-foreground"
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
+                                >
+                                    <Paperclip className="w-5 h-5" />
+                                </Button>
+                                <Input
+                                    value={newMessage}
+                                    onChange={(e) =>
+                                        setNewMessage(e.target.value)
+                                    }
+                                    placeholder="Type a message..."
+                                    className="flex-1 shadow-sm"
+                                />
+                                <Button
+                                    type="submit"
+                                    disabled={!newMessage.trim() && !fileUrl}
+                                    className="shadow-sm shrink-0"
+                                >
+                                    <Send className="w-4 h-4" />
+                                </Button>
+                            </form>
+                        )}
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center bg-muted/10">
