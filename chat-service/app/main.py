@@ -37,7 +37,9 @@ async def lifespan(app: FastAPI):
                 text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url TEXT;")
             )
             await conn.execute(
-                text("ALTER TABLE articles ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE;")
+                text(
+                    "ALTER TABLE articles ADD COLUMN IF NOT EXISTS is_sold BOOLEAN DEFAULT FALSE;"
+                )
             )
             logger.info("Migration: columns ensured on messages and articles tables.")
         except Exception as e:
