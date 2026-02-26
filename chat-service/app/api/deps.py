@@ -9,19 +9,27 @@ from app import models, schemas
 from app.core.config import settings
 from app.db.session import get_db
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login/access-token")
+reusable_oauth2 = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/auth/login/access-token"
+)
 
 
-async def get_current_user(db: AsyncSession = Depends(get_db), token: str = Depends(reusable_oauth2)) -> models.User:
+async def get_current_user(
+    db: AsyncSession = Depends(get_db), token: str = Depends(reusable_oauth2)
+) -> models.User:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         token_data = schemas.TokenPayload(**payload)
     except (JWTError, ValidationError) as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         ) from e
-    result = await db.execute(select(models.User).where(models.User.id == int(token_data.sub)))
+    result = await db.execute(
+        select(models.User).where(models.User.id == int(token_data.sub))
+    )
     user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

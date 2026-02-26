@@ -123,9 +123,7 @@ export const ChatPage = () => {
         if (!token) return;
 
         // Convert the REST API endpoints directly over to active WebSockets
-        const wsUrl =
-            api.defaults.baseURL ||
-            `${CHAT_BASE_URL.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${activeConv.id}/ws?token=${token}`;
+        const wsUrl = `${CHAT_BASE_URL.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${activeConv.id}/ws?token=${token}`;
 
         const ws = new WebSocket(wsUrl);
 

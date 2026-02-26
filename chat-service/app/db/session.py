@@ -11,7 +11,9 @@ engine = create_async_engine(settings.database_url, echo=True)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 Base = declarative_base()
 
-DB_QUERY_DURATION = Histogram("db_query_duration_seconds", "Time spent executing database queries")
+DB_QUERY_DURATION = Histogram(
+    "db_query_duration_seconds", "Time spent executing database queries"
+)
 
 
 @event.listens_for(engine.sync_engine, "before_cursor_execute")

@@ -23,7 +23,10 @@ class ConnectionManager:
         self.active_connections[conv_id].append(ws)
 
     def disconnect(self, ws: WebSocket, conv_id: int):
-        if conv_id in self.active_connections and ws in self.active_connections[conv_id]:
+        if (
+            conv_id in self.active_connections
+            and ws in self.active_connections[conv_id]
+        ):
             self.active_connections[conv_id].remove(ws)
             if not self.active_connections[conv_id]:
                 del self.active_connections[conv_id]
@@ -50,12 +53,18 @@ async def create_or_get_conversation(
         raise HTTPException(status_code=404, detail="Article not found")
 
     if current_user.id == article.seller_id:
-        raise HTTPException(status_code=400, detail="Sellers cannot start a conversation with themselves")
+        raise HTTPException(
+            status_code=400,
+            detail="Sellers cannot start a conversation with themselves",
+        )
 
     # Check if conversation already exists
     query = (
         select(models.Conversation)
-        .where(models.Conversation.article_id == article.id, models.Conversation.buyer_id == current_user.id)
+        .where(
+            models.Conversation.article_id == article.id,
+            models.Conversation.buyer_id == current_user.id,
+        )
         .options(selectinload(models.Conversation.messages))
     )
     result = await db.execute(query)
@@ -66,7 +75,10 @@ async def create_or_get_conversation(
 
     # Create new conversation
     conversation = models.Conversation(
-        article_id=article.id, buyer_id=current_user.id, seller_id=article.seller_id, messages=[]
+        article_id=article.id,
+        buyer_id=current_user.id,
+        seller_id=article.seller_id,
+        messages=[],
     )
     db.add(conversation)
     await db.commit()
@@ -81,7 +93,10 @@ async def list_conversations(
 ) -> Any:
     query = (
         select(models.Conversation)
-        .where((models.Conversation.buyer_id == current_user.id) | (models.Conversation.seller_id == current_user.id))
+        .where(
+            (models.Conversation.buyer_id == current_user.id)
+            | (models.Conversation.seller_id == current_user.id)
+        )
         .options(selectinload(models.Conversation.messages))
     )
 
@@ -107,7 +122,10 @@ async def get_conversation(
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    if conversation.buyer_id != current_user.id and conversation.seller_id != current_user.id:
+    if (
+        conversation.buyer_id != current_user.id
+        and conversation.seller_id != current_user.id
+    ):
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     return conversation
@@ -124,7 +142,9 @@ async def websocket_endpoint(
     from app.core.config import settings
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         user_id = int(payload.sub)
     except Exception:
         await websocket.close(code=1008)
@@ -135,7 +155,11 @@ async def websocket_endpoint(
     if not conversation:
         await websocket.close(code=1008)
         return
-    if conversation.buyer_id != user_id and conversation.seller_id != user_id and user_id != 1:  # Simple check for admin
+    if (
+        conversation.buyer_id != user_id
+        and conversation.seller_id != user_id
+        and user_id != 1
+    ):  # Simple check for admin
         await websocket.close(code=1008)
         return
 
@@ -147,7 +171,9 @@ async def websocket_endpoint(
         manager.disconnect(websocket, conversation_id)
 
 
-@router.post("/conversations/{conversation_id}/messages", response_model=schemas.Message)
+@router.post(
+    "/conversations/{conversation_id}/messages", response_model=schemas.Message
+)
 async def create_message(
     conversation_id: int,
     message_in: schemas.MessageCreate,
@@ -158,7 +184,10 @@ async def create_message(
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    if conversation.buyer_id != current_user.id and conversation.seller_id != current_user.id:
+    if (
+        conversation.buyer_id != current_user.id
+        and conversation.seller_id != current_user.id
+    ):
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     message = models.Message(
@@ -177,7 +206,10 @@ async def create_message(
     return message
 
 
-@router.post("/conversations/{conversation_id}/checkout", response_model=schemas.PaymentSimulation)
+@router.post(
+    "/conversations/{conversation_id}/checkout",
+    response_model=schemas.PaymentSimulation,
+)
 async def mock_checkout(
     conversation_id: int,
     db: AsyncSession = Depends(get_db),
@@ -195,6 +227,7 @@ async def mock_checkout(
         raise HTTPException(status_code=404, detail="Article not found or already sold")
 
     import uuid
+
     tx_id = f"pi_mock_{uuid.uuid4().hex[:12]}"
 
     system_msg = models.Message(
@@ -213,4 +246,8 @@ async def mock_checkout(
     msg_schema = schemas.Message.model_validate(system_msg)
     await manager.broadcast_message(msg_schema.model_dump_json(), conversation.id)
 
-    return {"amount": article.price + (article.shipping_cost or 0), "success": True, "transaction_id": tx_id}
+    return {
+        "amount": article.price + (article.shipping_cost or 0),
+        "success": True,
+        "transaction_id": tx_id,
+    }
