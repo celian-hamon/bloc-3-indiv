@@ -235,10 +235,10 @@ export const HomePage = () => {
                                 <Link
                                     key={item.id}
                                     to={`/article/${item.id}`}
-                                    className="block"
+                                    className="block h-full"
                                 >
                                     <Card
-                                        className={`flex flex-col card-hover overflow-hidden border-border/50 cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
+                                        className={`flex flex-col h-full card-hover overflow-hidden border-border/50 cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
                                     >
                                         <div className="aspect-video w-full bg-muted overflow-hidden relative group">
                                             {getFirstImage(item.image_url) ? (

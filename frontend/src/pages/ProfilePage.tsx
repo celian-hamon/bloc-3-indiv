@@ -175,10 +175,10 @@ export const ProfilePage = () => {
                                     <Link
                                         key={article.id}
                                         to={`/article/${article.id}`}
-                                        className="block"
+                                        className="block h-full"
                                     >
                                         <Card
-                                            className={`card-hover overflow-hidden cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
+                                            className={`flex flex-col h-full card-hover overflow-hidden cursor-pointer animate-fade-in-up stagger-${Math.min(i + 1, 8)}`}
                                         >
                                             <div className="aspect-video bg-muted relative overflow-hidden group">
                                                 {getFirstImage(
@@ -213,7 +213,7 @@ export const ProfilePage = () => {
                                                     ${article.price.toFixed(2)}
                                                 </div>
                                             </div>
-                                            <CardContent className="p-4">
+                                            <CardContent className="p-4 flex-1 flex flex-col">
                                                 <h3 className="font-bold truncate">
                                                     {article.title}
                                                 </h3>
