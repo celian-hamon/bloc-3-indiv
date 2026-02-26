@@ -148,7 +148,8 @@ async def websocket_endpoint(
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        user_id = int(payload.sub)
+        token_data = schemas.TokenPayload(**payload)
+        user_id = int(token_data.sub)
         logger.info(f"WS attempt for user {user_id} in conv {conversation_id}")
     except Exception as e:
         logger.error(f"WS Auth failed: {e}")
