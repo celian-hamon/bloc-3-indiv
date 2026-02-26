@@ -35,22 +35,16 @@ spec:
                             secretKeyRef:
                                 name: collector-secret
                                 key: SECRET_KEY
-                  readinessProbe:
+                   readinessProbe:
                       httpGet:
-                          path: /api/v1/chat/conversations
+                          path: /health
                           port: 8001
-                          httpHeaders:
-                              - name: Authorization
-                                value: Bearer healthcheck
                       initialDelaySeconds: 10
                       periodSeconds: 5
                   livenessProbe:
                       httpGet:
-                          path: /api/v1/chat/conversations
+                          path: /health
                           port: 8001
-                          httpHeaders:
-                              - name: Authorization
-                                value: Bearer healthcheck
                       initialDelaySeconds: 15
                       periodSeconds: 10
                   resources:
