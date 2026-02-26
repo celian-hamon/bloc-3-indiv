@@ -37,23 +37,23 @@ spec:
                                 key: SECRET_KEY
                   readinessProbe:
                       httpGet:
-                          path: /api/v1/openapi.json
+                          path: /health
                           port: 8001
                       initialDelaySeconds: 10
                       periodSeconds: 5
                   livenessProbe:
                       httpGet:
-                          path: /api/v1/openapi.json
+                          path: /health
                           port: 8001
                       initialDelaySeconds: 15
                       periodSeconds: 10
                   resources:
                       requests:
-                          memory: "128Mi"
                           cpu: "250m"
+                          memory: "128Mi"
                       limits:
-                          memory: "256Mi"
                           cpu: "500m"
+                          memory: "256Mi"
 
 ---
 apiVersion: v1

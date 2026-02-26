@@ -138,21 +138,25 @@ async def websocket_endpoint(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    from jose import jwt
-    from app.core.config import settings
+    import logging
+
+    logger = logging.getLogger(__name__)
 
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id = int(payload.sub)
-    except Exception:
+        logger.info(f"WS attempt for user {user_id} in conv {conversation_id}")
+    except Exception as e:
+        logger.error(f"WS Auth failed: {e}")
         await websocket.close(code=1008)
         return
 
     # Check permissions
     conversation = await db.get(models.Conversation, conversation_id)
     if not conversation:
+        logger.error(f"WS failed: Conv {conversation_id} not found")
         await websocket.close(code=1008)
         return
     if (
@@ -160,6 +164,9 @@ async def websocket_endpoint(
         and conversation.seller_id != user_id
         and user_id != 1
     ):  # Simple check for admin
+        logger.error(
+            f"WS failed: User {user_id} not in conv {conversation_id} (Buyer: {conversation.buyer_id}, Seller: {conversation.seller_id})"
+        )
         await websocket.close(code=1008)
         return
 
