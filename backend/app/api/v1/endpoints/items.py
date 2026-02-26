@@ -126,6 +126,22 @@ async def update_article(
         raise HTTPException(status_code=403, detail="Not allowed to update this article")
 
     update_data = article_in.model_dump(exclude_unset=True)
+
+    # Check for price fraud if price is being updated
+    if "price" in update_data and update_data["price"] != article.price:
+        fraud_result = await check_price_change(
+            article_id=article.id,
+            old_price=article.price,
+            new_price=update_data["price"],
+            seller_id=current_user.id,
+            db=db,
+        )
+        if fraud_result["is_suspicious"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Price change flagged as suspicious: {fraud_result['reason']}. Contact support.",
+            )
+
     for field, value in update_data.items():
         setattr(article, field, value)
 
