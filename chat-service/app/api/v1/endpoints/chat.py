@@ -233,7 +233,7 @@ async def mock_checkout(
         raise HTTPException(status_code=403, detail="Only buyers can checkout here.")
 
     article = await db.get(models.Article, conversation.article_id)
-    if not article:
+    if not article or article.is_sold:
         raise HTTPException(status_code=404, detail="Article not found or already sold")
 
     import uuid
@@ -249,7 +249,8 @@ async def mock_checkout(
     )
     db.add(system_msg)
 
-    await db.delete(article)
+    article.is_sold = True
+    db.add(article)
     await db.commit()
     await db.refresh(system_msg)
 

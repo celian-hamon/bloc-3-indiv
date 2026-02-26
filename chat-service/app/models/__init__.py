@@ -30,6 +30,7 @@ class Article(Base):
     price = Column(Float, nullable=False)
     shipping_cost = Column(Float, default=0.0)
     seller_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_sold = Column(Boolean, default=False)
 
 
 class Conversation(Base):
