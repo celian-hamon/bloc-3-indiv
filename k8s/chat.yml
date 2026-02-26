@@ -6,7 +6,7 @@ metadata:
     labels:
         app: chat-service
 spec:
-    replicas: 2
+    replicas: 1
     selector:
         matchLabels:
             app: chat-service
@@ -80,8 +80,8 @@ spec:
         apiVersion: apps/v1
         kind: Deployment
         name: chat-service
-    minReplicas: 2
-    maxReplicas: 5
+    minReplicas: 1
+    maxReplicas: 2
     metrics:
         - type: Resource
           resource:
