@@ -17,7 +17,7 @@ spec:
         spec:
             containers:
                 - name: chat-service
-                  image: rg.fr-par.scw.cloud/bloc-3-indiv/chat-service:5613c52296c5c8163328c5746105640e94c797ae
+                  image: rg.fr-par.scw.cloud/bloc-3-indiv/chat-service:b4c78bbbcfd89a3909443497e206fd584a042a4e
                   imagePullPolicy: Always
                   ports:
                       - containerPort: 8001
