@@ -5,9 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
+import logging
+from jose import jwt
+
 from app import models, schemas
 from app.api import deps
+from app.core.config import settings
 from app.db.session import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -138,10 +144,6 @@ async def websocket_endpoint(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    import logging
-
-    logger = logging.getLogger(__name__)
-
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
