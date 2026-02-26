@@ -11,6 +11,7 @@ from app.db.session import Base, engine
 
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Retry DB connection up to 10 times
@@ -29,13 +30,17 @@ async def lifespan(app: FastAPI):
 
     # Run lightweight migration for file_url column
     from sqlalchemy import text
+
     async with engine.begin() as conn:
         try:
-            await conn.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url TEXT;"))
+            await conn.execute(
+                text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url TEXT;")
+            )
             logger.info("Migration: file_url column ensured on messages table.")
         except Exception as e:
             logger.warning(f"Migration warning (non-fatal): {e}")
     yield
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
