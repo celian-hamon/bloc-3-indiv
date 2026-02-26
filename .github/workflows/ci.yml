@@ -23,13 +23,21 @@ jobs:
             - name: Install Ruff
               run: pip install ruff
 
-            - name: Lint
+            - name: Lint Backend
               working-directory: ./backend
               run: ruff check app/ tests/
 
-            - name: Format check
+            - name: Format check Backend
               working-directory: ./backend
               run: ruff format --check app/ tests/
+
+            - name: Lint Chat Service
+              working-directory: ./chat-service
+              run: ruff check app/
+
+            - name: Format check Chat Service
+              working-directory: ./chat-service
+              run: ruff format --check app/
 
     frontend-quality:
         runs-on: ubuntu-latest
@@ -87,10 +95,22 @@ jobs:
               working-directory: ./frontend
               run: npm ci
 
+            - name: Install chat-service dependencies
+              working-directory: ./chat-service
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
+                  pip install pip-audit
+
             - name: Backend Security audit (pip-audit)
               working-directory: ./backend
               continue-on-error: true
               run: pip-audit -r requirements.txt --desc --output backend-audit-report.txt
+
+            - name: Chat Service Security audit (pip-audit)
+              working-directory: ./chat-service
+              continue-on-error: true
+              run: pip-audit -r requirements.txt --desc --output chat-audit-report.txt
 
             - name: Frontend Security audit (npm audit)
               working-directory: ./frontend
@@ -104,6 +124,7 @@ jobs:
                   name: security-audit
                   path: |
                       backend/backend-audit-report.txt
+                      chat-service/chat-audit-report.txt
                       frontend/frontend-audit-report.txt
 
     # ──────────────────────────────────────────────
@@ -161,6 +182,12 @@ jobs:
             - name: Verify Backend image
               run: docker image inspect collector-api:${{ github.sha }}
 
+            - name: Build Chat Service Docker image
+              run: docker build -t chat-service:${{ github.sha }} ./chat-service
+
+            - name: Verify Chat Service image
+              run: docker image inspect chat-service:${{ github.sha }}
+
             - name: Build Frontend Docker image
               run: docker build -t collector-frontend:${{ github.sha }} ./frontend
 
@@ -191,10 +218,14 @@ jobs:
             - name: Build and push Docker images
               run: |
                   API_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
+                  CHAT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/chat-service"
                   FRONT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend"
 
                   docker build -t $API_IMAGE:${{ github.sha }} -t $API_IMAGE:latest ./backend
                   docker push $API_IMAGE --all-tags
+
+                  docker build -t $CHAT_IMAGE:${{ github.sha }} -t $CHAT_IMAGE:latest ./chat-service
+                  docker push $CHAT_IMAGE --all-tags
 
                   docker build -t $FRONT_IMAGE:${{ github.sha }} -t $FRONT_IMAGE:latest ./frontend
                   docker push $FRONT_IMAGE --all-tags
@@ -202,12 +233,17 @@ jobs:
             - name: Update Kubernetes manifests
               run: |
                   API_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-api"
+                  CHAT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/chat-service"
                   FRONT_IMAGE="rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend"
 
                   # Update APIs manifest
                   sed -i "s|image: $API_IMAGE:.*|image: $API_IMAGE:${{ github.sha }}|g" k8s/app.yml
                   sed -i "s|image: collector-api:latest|image: $API_IMAGE:${{ github.sha }}|g" k8s/app.yml
                   sed -i "s|imagePullPolicy: Never|imagePullPolicy: Always|g" k8s/app.yml
+
+                  # Update Chat Service manifest
+                  sed -i "s|image: $CHAT_IMAGE:.*|image: $CHAT_IMAGE:${{ github.sha }}|g" k8s/chat.yml
+                  sed -i "s|image: $CHAT_IMAGE:latest|image: $CHAT_IMAGE:${{ github.sha }}|g" k8s/chat.yml
 
                   # Update Frontend manifest
                   sed -i "s|image: $FRONT_IMAGE:.*|image: $FRONT_IMAGE:${{ github.sha }}|g" k8s/frontend.yml
@@ -218,6 +254,6 @@ jobs:
               run: |
                   git config --global user.name "github-actions[bot]"
                   git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                  git add k8s/app.yml k8s/frontend.yml
+                  git add k8s/app.yml k8s/frontend.yml k8s/chat.yml
                   # Commit and push if there are changes
                   git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update images to ${{ github.sha }} for Argo CD" && git push)

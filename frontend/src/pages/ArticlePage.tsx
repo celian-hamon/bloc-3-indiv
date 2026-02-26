@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import api from "../lib/api";
+import api, { chatApi } from "../lib/api";
 import { MessageSquare, Pencil } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -62,7 +62,7 @@ export const ArticlePage = () => {
 
         setChatLoading(true);
         try {
-            const res = await api.post("/chat/conversations", {
+            const res = await chatApi.post("/chat/conversations", {
                 article_id: article?.id,
             });
             navigate(`/chat/${res.data.id}`);

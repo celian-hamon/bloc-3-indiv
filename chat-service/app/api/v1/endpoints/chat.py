@@ -121,7 +121,6 @@ async def websocket_endpoint(
     db: AsyncSession = Depends(get_db),
 ):
     from jose import jwt
-
     from app.core.config import settings
 
     try:
@@ -136,15 +135,13 @@ async def websocket_endpoint(
     if not conversation:
         await websocket.close(code=1008)
         return
-    if conversation.buyer_id != user_id and conversation.seller_id != user_id and user_id != 1:  # Simple check
+    if conversation.buyer_id != user_id and conversation.seller_id != user_id and user_id != 1:  # Simple check for admin
         await websocket.close(code=1008)
         return
 
     await manager.connect(websocket, conversation_id)
     try:
         while True:
-            # We don't really expect clients to send messages via WS directly,
-            # but we keep connection open and listen.
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket, conversation_id)
@@ -186,10 +183,6 @@ async def mock_checkout(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
-    """
-    Mock endpoint to simulate Stripe checkout for buying an item through chat.
-    We just pretend we did a stripe call, delete the article if successful.
-    """
     conversation = await db.get(models.Conversation, conversation_id)
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -201,14 +194,9 @@ async def mock_checkout(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found or already sold")
 
-    # In a real app we'd trigger a stripe session here and wait for a webhook.
-    # For now, simulate absolute success and mark the article as sold (delete it for mocking simplicity).
     import uuid
-
     tx_id = f"pi_mock_{uuid.uuid4().hex[:12]}"
 
-    # add a message from "system" saying it was purchased
-    # we represent system as the seller just to not create a dummy user
     system_msg = models.Message(
         conversation_id=conversation.id,
         sender_id=conversation.seller_id,
@@ -218,8 +206,6 @@ async def mock_checkout(
     )
     db.add(system_msg)
 
-    # We could delete the item, or maybe better, add a field or just leave it for the demo
-    # We'll just delete the article to mock it being 'bought / removed' from catalog
     await db.delete(article)
     await db.commit()
     await db.refresh(system_msg)

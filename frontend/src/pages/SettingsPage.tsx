@@ -11,6 +11,7 @@ import {
     CardHeader,
     CardTitle,
 } from "../components/ui/card";
+import { FormError } from "../components/ui/form-error";
 
 export const SettingsPage = () => {
     const { user, logout } = useAuth();
@@ -95,11 +96,7 @@ export const SettingsPage = () => {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleUpdate} className="space-y-4">
-                            {error && (
-                                <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md animate-scale-in">
-                                    {error}
-                                </div>
-                            )}
+                            <FormError message={error} />
                             {success && (
                                 <div className="p-3 bg-green-500/10 text-green-600 text-sm rounded-md animate-scale-in">
                                     {success}

@@ -29,6 +29,18 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(2)
             else:
                 raise
+
+    # Run lightweight migrations for new columns on existing tables
+    # (create_all only creates new tables, it won't ALTER existing ones)
+    from sqlalchemy import text
+
+    async with engine.begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url TEXT;"))
+            logger.info("Migration: file_url column ensured on messages table.")
+        except Exception as e:
+            logger.warning(f"Migration warning (non-fatal): {e}")
+
     yield
 
 

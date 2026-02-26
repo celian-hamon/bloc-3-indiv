@@ -5,6 +5,7 @@ import api from "../lib/api";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { FormError } from "../components/ui/form-error";
 
 interface Item {
     id: number;
@@ -184,11 +185,9 @@ export const HomePage = () => {
                 )}
 
                 {/* Error */}
-                {error && (
-                    <div className="p-4 bg-destructive/10 text-destructive font-semibold rounded-md text-center max-w-md mx-auto animate-scale-in">
-                        {error}
-                    </div>
-                )}
+                <div className="max-w-md mx-auto w-full">
+                    <FormError message={error} />
+                </div>
 
                 {/* Empty */}
                 {!loading && !error && items.length === 0 && (

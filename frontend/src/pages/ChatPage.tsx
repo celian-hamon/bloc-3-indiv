@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import api from "../lib/api";
+import api, { chatApi, CHAT_BASE_URL } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -64,7 +64,9 @@ export const ChatPage = () => {
 
     const loadConversations = async () => {
         try {
-            const res = await api.get<Conversation[]>("/chat/conversations");
+            const res = await chatApi.get<Conversation[]>(
+                "/chat/conversations",
+            );
             setConversations(res.data);
 
             // Fetch article data for these conversations to show titles/images
@@ -121,8 +123,9 @@ export const ChatPage = () => {
         if (!token) return;
 
         // Convert the REST API endpoints directly over to active WebSockets
-        const baseUrl = api.defaults.baseURL || "https://celianhamon.fr/api/v1";
-        const wsUrl = `${baseUrl.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${activeConv.id}/ws?token=${token}`;
+        const wsUrl =
+            api.defaults.baseURL ||
+            `${CHAT_BASE_URL.replace(/^(http)(s)?/i, "ws$2")}/chat/conversations/${activeConv.id}/ws?token=${token}`;
 
         const ws = new WebSocket(wsUrl);
 
@@ -161,7 +164,7 @@ export const ChatPage = () => {
         if ((!newMessage.trim() && !fileUrl) || !activeConv) return;
 
         try {
-            const res = await api.post<Message>(
+            const res = await chatApi.post<Message>(
                 `/chat/conversations/${activeConv.id}/messages`,
                 {
                     content: newMessage,
@@ -201,7 +204,7 @@ export const ChatPage = () => {
         if (!activeConv) return;
         setBuying(true);
         try {
-            const res = await api.post(
+            const res = await chatApi.post(
                 `/chat/conversations/${activeConv.id}/checkout`,
             );
             alert(

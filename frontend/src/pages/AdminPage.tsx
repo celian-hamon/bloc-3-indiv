@@ -9,6 +9,7 @@ import {
     CardTitle,
     CardDescription,
 } from "../components/ui/card";
+import { FormError } from "../components/ui/form-error";
 
 interface Article {
     id: number;
@@ -260,11 +261,9 @@ export const AdminPage = () => {
                                 ))}
                             </div>
                         )}
-                        {error && (
-                            <div className="p-4 bg-destructive/10 text-destructive font-semibold rounded-md text-center max-w-md mx-auto animate-scale-in">
-                                {error}
-                            </div>
-                        )}
+                        <div className="max-w-md mx-auto w-full">
+                            <FormError message={error} />
+                        </div>
                         {!loading && !error && articles.length === 0 && (
                             <div className="text-center py-20 border-2 border-dashed border-muted rounded-xl bg-card animate-fade-in-up">
                                 <div className="text-5xl mb-4">📋</div>
@@ -422,11 +421,9 @@ export const AdminPage = () => {
                                         {catLoading ? "..." : "Add"}
                                     </Button>
                                 </form>
-                                {catError && (
-                                    <p className="text-sm text-destructive mt-2 animate-scale-in">
-                                        {catError}
-                                    </p>
-                                )}
+                                <div className="mt-2">
+                                    <FormError message={catError} />
+                                </div>
                             </CardContent>
                         </Card>
                         {categories.length === 0 && (

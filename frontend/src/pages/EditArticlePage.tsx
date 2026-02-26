@@ -11,6 +11,7 @@ import {
     CardHeader,
     CardTitle,
 } from "../components/ui/card";
+import { FormError } from "../components/ui/form-error";
 
 interface Category {
     id: number;
@@ -203,11 +204,7 @@ export const EditArticlePage = () => {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {error && (
-                            <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md animate-scale-in">
-                                {error}
-                            </div>
-                        )}
+                        <FormError message={error} />
 
                         {/* Multi-Image Upload with Drag & Drop Reorder */}
                         <div className="space-y-3">

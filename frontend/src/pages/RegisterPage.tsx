@@ -11,6 +11,7 @@ import {
     CardHeader,
     CardTitle,
 } from "../components/ui/card";
+import { FormError } from "../components/ui/form-error";
 
 export const RegisterPage = () => {
     const [email, setEmail] = useState("");
@@ -78,11 +79,7 @@ export const RegisterPage = () => {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleRegister} className="space-y-4">
-                        {error && (
-                            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md animate-scale-in">
-                                {error}
-                            </div>
-                        )}
+                        <FormError message={error} />
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium">
