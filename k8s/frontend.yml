@@ -17,7 +17,7 @@ spec:
         spec:
             containers:
                 - name: frontend-app
-                  image: rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend:3f205b70e417cd0d68bc1c42326a1a6d4a7e3166
+                  image: rg.fr-par.scw.cloud/bloc-3-indiv/collector-frontend:fda2218e2a15e687ffb1095ccb2483fec9d608da
                   imagePullPolicy: Always
                   ports:
                       - containerPort: 80
