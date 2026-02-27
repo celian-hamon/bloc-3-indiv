@@ -66,30 +66,93 @@ async def seed():
         # ─── Sample Articles ───
         items = [
             Article(
-                title="Laptop Pro",
-                description="High performance laptop with 16GB RAM and 512GB SSD",
-                price=1200.0,
+                title="Montre Raketa 24 Heures – Villes du Monde – Condor",
+                description="Montre Raketa avec affichage 24 heures et villes du monde.",
+                price=290.0,
+                shipping_cost=10.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Raketa 2609 – Chiffres Laiton",
+                description="Montre Raketa vintage calibre 2609 avec chiffres en laiton.",
+                price=220.0,
+                shipping_cost=8.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Montre Raketa Cercle Arctique – 24 Heures – 469820",
+                description="Montre Raketa Cercle Arctique 24 heures édition spéciale 469820.",
+                price=240.0,
+                shipping_cost=8.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Chronographe Poljot – Années 90 – 3133",
+                description="Chronographe Poljot calibre 3133 des années 90.",
+                price=390.0,
+                shipping_cost=12.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Montre Kama – Années 50 – Nid Abeille",
+                description="Authentique montre Kama des années 50 avec cadran nid d'abeille.",
+                price=165.0,
+                shipping_cost=8.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Raketa Art Déco – 2609 – NOS – Set Complet",
+                description="Montre Raketa Art Déco 2609 NOS (New Old Stock) en set complet.",
+                price=240.0,
+                shipping_cost=10.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Montre Poljot Chronographe 3133 – Visite Gorbatchev Japon 1991",
+                description="Montre commémorative de la visite de Mikhaïl Gorbatchev au Japon en 1991.",
+                price=580.0,
+                shipping_cost=15.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Montre Chronographe – Sekonda 3017 – Cosmonaute",
+                description="Rare chronographe Sekonda 3017 modèle Cosmonaute.",
+                price=1290.0,
+                shipping_cost=25.0,
+                is_approved=True,
+                category_id=category_objects[5].id,  # Collectibles & Art
+                seller_id=admin.id,
+            ),
+            Article(
+                title="Montre Scaphandrier URSS – 191CHS – Zlatoust – Numéro 3001",
+                description="Grande montre de scaphandrier de la marine soviétique URSS (Zlatoust).",
+                price=1150.0,
                 shipping_cost=20.0,
                 is_approved=True,
-                category_id=category_objects[0].id,  # Electronics
+                category_id=category_objects[5].id,  # Collectibles & Art
                 seller_id=admin.id,
             ),
             Article(
-                title="Wireless Mouse",
-                description="Ergonomic wireless mouse with precision tracking",
-                price=30.0,
-                shipping_cost=5.0,
+                title="Poljot Shturmanskie Chronographe – 3133",
+                description="Chronographe de l'armée de l'air soviétique Poljot Shturmanskie.",
+                price=490.0,
+                shipping_cost=15.0,
                 is_approved=True,
-                category_id=category_objects[0].id,  # Electronics
-                seller_id=admin.id,
-            ),
-            Article(
-                title="Cotton T-Shirt",
-                description="Comfortable everyday wear, 100% organic cotton",
-                price=15.0,
-                shipping_cost=2.0,
-                is_approved=True,
-                category_id=category_objects[1].id,  # Clothing
+                category_id=category_objects[5].id,  # Collectibles & Art
                 seller_id=admin.id,
             ),
         ]
