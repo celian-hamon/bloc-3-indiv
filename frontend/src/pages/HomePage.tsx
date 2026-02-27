@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../lib/api";
@@ -51,7 +51,9 @@ export const HomePage = () => {
     const [totalItems, setTotalItems] = useState(0);
     const limit = 12;
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const observerRef = useRef<HTMLDivElement | null>(null);
 
     // Fetch categories once
     useEffect(() => {
@@ -71,7 +73,9 @@ export const HomePage = () => {
 
     // Fetch articles when filters change
     const fetchArticles = useCallback(() => {
-        setLoading(true);
+        if (page === 1) setLoading(true);
+        else setLoadingMore(true);
+
         const params = new URLSearchParams();
         if (selectedCategory)
             params.set("category_id", String(selectedCategory));
@@ -85,14 +89,25 @@ export const HomePage = () => {
 
         api.get(`/articles/${qs}`)
             .then((res) => {
-                setItems(res.data.items);
+                if (page === 1) {
+                    setItems(res.data.items);
+                } else {
+                    setItems((prev) => {
+                        const newItems = res.data.items.filter(
+                            (ni: Item) => !prev.some((p) => p.id === ni.id),
+                        );
+                        return [...prev, ...newItems];
+                    });
+                }
                 setTotalItems(res.data.total);
                 setLoading(false);
+                setLoadingMore(false);
             })
             .catch((err) => {
                 console.error(err);
-                setError("Failed to fetch articles from API.");
+                if (page === 1) setError("Failed to fetch articles from API.");
                 setLoading(false);
+                setLoadingMore(false);
             });
     }, [selectedCategory, debouncedSearch, page]);
 
@@ -100,12 +115,32 @@ export const HomePage = () => {
         fetchArticles();
     }, [fetchArticles]);
 
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (
+                    entries[0].isIntersecting &&
+                    items.length < totalItems &&
+                    !loading &&
+                    !loadingMore
+                ) {
+                    setPage((p) => p + 1);
+                }
+            },
+            { threshold: 0.1 },
+        );
+
+        if (observerRef.current) {
+            observer.observe(observerRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [items.length, totalItems, loading, loadingMore]);
+
     const getCategoryName = (categoryId?: number) => {
         if (!categoryId) return null;
         return categories.find((c) => c.id === categoryId)?.name || null;
     };
-
-    const totalPages = Math.ceil(totalItems / limit);
 
     return (
         <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-24 gap-6 page-enter">
@@ -314,34 +349,12 @@ export const HomePage = () => {
                             ))}
                         </div>
 
-                        {/* Pagination Controls */}
-                        {totalPages > 1 && (
-                            <div className="flex justify-center items-center gap-4 mt-8 animate-fade-in-up">
-                                <Button
-                                    variant="outline"
-                                    disabled={page === 1}
-                                    onClick={() =>
-                                        setPage((p) => Math.max(1, p - 1))
-                                    }
-                                >
-                                    Previous
-                                </Button>
-                                <span className="text-sm font-medium">
-                                    Page {page} of {totalPages}
-                                </span>
-                                <Button
-                                    variant="outline"
-                                    disabled={page >= totalPages}
-                                    onClick={() =>
-                                        setPage((p) =>
-                                            Math.min(totalPages, p + 1),
-                                        )
-                                    }
-                                >
-                                    Next
-                                </Button>
+                        {loadingMore && (
+                            <div className="flex justify-center mt-8 animate-fade-in-up">
+                                <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
                             </div>
                         )}
+                        <div ref={observerRef} className="h-10 w-full" />
                     </>
                 )}
             </div>
