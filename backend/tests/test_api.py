@@ -8,7 +8,9 @@ def test_browse_catalog_public(client: TestClient):
     """Catalog browsing should be public (no auth required)."""
     response = client.get("/api/v1/articles/")
     assert response.status_code == 200
-    assert response.json() == []
+    data = response.json()
+    assert data["items"] == []
+    assert data["total"] == 0
 
 
 def test_browse_catalog_returns_approved(client: TestClient, approved_article: Article):
@@ -16,8 +18,9 @@ def test_browse_catalog_returns_approved(client: TestClient, approved_article: A
     response = client.get("/api/v1/articles/")
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["title"] == approved_article.title
+    assert len(data["items"]) == 1
+    assert data["total"] == 1
+    assert data["items"][0]["title"] == approved_article.title
 
 
 def test_create_article_as_seller(client: TestClient, seller_headers: dict):

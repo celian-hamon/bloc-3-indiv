@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -59,6 +59,9 @@ const getFirstImage = (url: string | null): string | null => {
 
 export const AdminPage = () => {
     const [articles, setArticles] = useState<Article[]>([]);
+    const [totalArticles, setTotalArticles] = useState(0);
+    const [articlePage, setArticlePage] = useState(1);
+    const articleLimit = 20;
     const [categories, setCategories] = useState<Category[]>([]);
     const [fraudLogs, setFraudLogs] = useState<FraudLogEntry[]>([]);
     const [loading, setLoading] = useState(true);
@@ -78,17 +81,20 @@ export const AdminPage = () => {
 
     const [tab, setTab] = useState<Tab>("articles");
 
-    const fetchArticles = () => {
-        api.get("/articles/admin/all")
+    const fetchArticles = useCallback(() => {
+        setLoading(true);
+        const skip = (articlePage - 1) * articleLimit;
+        api.get(`/articles/admin/all?skip=${skip}&limit=${articleLimit}`)
             .then((res) => {
-                setArticles(res.data);
+                setArticles(res.data.items);
+                setTotalArticles(res.data.total);
                 setLoading(false);
             })
             .catch(() => {
                 setError("Failed to fetch articles.");
                 setLoading(false);
             });
-    };
+    }, [articlePage]);
 
     const fetchCategories = () => {
         api.get("/categories/")
@@ -104,6 +110,9 @@ export const AdminPage = () => {
 
     useEffect(() => {
         fetchArticles();
+    }, [fetchArticles]);
+
+    useEffect(() => {
         fetchCategories();
         fetchFraudLogs();
     }, []);
@@ -377,6 +386,50 @@ export const AdminPage = () => {
                                 ))}
                             </div>
                         )}
+                        {totalArticles > 0 &&
+                            Math.ceil(totalArticles / articleLimit) > 1 && (
+                                <div className="flex justify-center items-center gap-4 mt-6 animate-fade-in-up">
+                                    <Button
+                                        variant="outline"
+                                        disabled={articlePage === 1}
+                                        onClick={() =>
+                                            setArticlePage((p) =>
+                                                Math.max(1, p - 1),
+                                            )
+                                        }
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="text-sm font-medium">
+                                        Page {articlePage} of{" "}
+                                        {Math.ceil(
+                                            totalArticles / articleLimit,
+                                        )}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        disabled={
+                                            articlePage >=
+                                            Math.ceil(
+                                                totalArticles / articleLimit,
+                                            )
+                                        }
+                                        onClick={() =>
+                                            setArticlePage((p) =>
+                                                Math.min(
+                                                    Math.ceil(
+                                                        totalArticles /
+                                                            articleLimit,
+                                                    ),
+                                                    p + 1,
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            )}
                     </>
                 )}
 

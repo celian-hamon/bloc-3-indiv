@@ -41,3 +41,8 @@ class Article(ArticleInDBBase):
 
 class ArticleInDB(ArticleInDBBase):
     pass
+
+
+class PaginatedArticles(BaseModel):
+    items: list[Article]
+    total: int

@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -12,7 +13,7 @@ from app.services.fraud import check_price_change
 router = APIRouter()
 
 
-@router.get("/", response_model=list[schemas.Article])
+@router.get("/", response_model=schemas.PaginatedArticles)
 async def list_articles(
     skip: int = 0,
     limit: int = 100,
@@ -30,12 +31,15 @@ async def list_articles(
     if search:
         search_filter = f"%{search}%"
         query = query.where(models.Article.title.ilike(search_filter) | models.Article.description.ilike(search_filter))
+
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
     query = query.offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+    return {"items": items, "total": total}
 
 
-@router.get("/admin/all", response_model=list[schemas.Article])
+@router.get("/admin/all", response_model=schemas.PaginatedArticles)
 async def list_all_articles(
     skip: int = 0,
     limit: int = 100,
@@ -45,12 +49,15 @@ async def list_all_articles(
     """
     List ALL articles (including unapproved). Admin only.
     """
-    query = select(models.Article).offset(skip).limit(limit)
+    query = select(models.Article)
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
+    query = query.offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+    return {"items": items, "total": total}
 
 
-@router.get("/mine", response_model=list[schemas.Article])
+@router.get("/mine", response_model=schemas.PaginatedArticles)
 async def list_my_articles(
     skip: int = 0,
     limit: int = 100,
@@ -60,9 +67,12 @@ async def list_my_articles(
     """
     List current user's own articles (including unapproved).
     """
-    query = select(models.Article).where(models.Article.seller_id == current_user.id).offset(skip).limit(limit)
+    query = select(models.Article).where(models.Article.seller_id == current_user.id)
+    total = await db.scalar(select(func.count()).select_from(query.subquery()))
+    query = query.offset(skip).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+    return {"items": items, "total": total}
 
 
 @router.get("/{article_id}", response_model=schemas.Article)

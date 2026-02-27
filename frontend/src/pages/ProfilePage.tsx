@@ -39,19 +39,25 @@ export const ProfilePage = () => {
     const { user } = useAuth();
     const [articles, setArticles] = useState<Article[]>([]);
     const [articlesLoading, setArticlesLoading] = useState(true);
+    const [totalArticles, setTotalArticles] = useState(0);
+    const [articlePage, setArticlePage] = useState(1);
+    const articleLimit = 12;
 
     useEffect(() => {
         if (user && (user.role === "seller" || user.role === "admin")) {
-            api.get("/articles/mine")
+            setArticlesLoading(true);
+            const skip = (articlePage - 1) * articleLimit;
+            api.get(`/articles/mine?skip=${skip}&limit=${articleLimit}`)
                 .then((res) => {
-                    setArticles(res.data);
+                    setArticles(res.data.items);
+                    setTotalArticles(res.data.total);
                     setArticlesLoading(false);
                 })
                 .catch(() => setArticlesLoading(false));
         } else {
             setArticlesLoading(false);
         }
-    }, [user]);
+    }, [user, articlePage]);
 
     if (!user) return null;
 
@@ -93,7 +99,7 @@ export const ProfilePage = () => {
                         <div className="flex gap-6">
                             <div className="text-center">
                                 <p className="text-2xl font-extrabold">
-                                    {articles.length}
+                                    {totalArticles}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     Listings
@@ -227,6 +233,51 @@ export const ProfilePage = () => {
                                 ))}
                             </div>
                         )}
+
+                        {totalArticles > 0 &&
+                            Math.ceil(totalArticles / articleLimit) > 1 && (
+                                <div className="flex justify-center items-center gap-4 mt-6 animate-fade-in-up">
+                                    <Button
+                                        variant="outline"
+                                        disabled={articlePage === 1}
+                                        onClick={() =>
+                                            setArticlePage((p) =>
+                                                Math.max(1, p - 1),
+                                            )
+                                        }
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="text-sm font-medium">
+                                        Page {articlePage} of{" "}
+                                        {Math.ceil(
+                                            totalArticles / articleLimit,
+                                        )}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        disabled={
+                                            articlePage >=
+                                            Math.ceil(
+                                                totalArticles / articleLimit,
+                                            )
+                                        }
+                                        onClick={() =>
+                                            setArticlePage((p) =>
+                                                Math.min(
+                                                    Math.ceil(
+                                                        totalArticles /
+                                                            articleLimit,
+                                                    ),
+                                                    p + 1,
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            )}
                     </div>
                 )}
             </div>

@@ -47,6 +47,9 @@ export const HomePage = () => {
     );
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const limit = 12;
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +62,10 @@ export const HomePage = () => {
 
     // Debounce search input (300ms)
     useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setPage(1);
+        }, 300);
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
@@ -71,11 +77,16 @@ export const HomePage = () => {
             params.set("category_id", String(selectedCategory));
         if (debouncedSearch.trim())
             params.set("search", debouncedSearch.trim());
+
+        params.set("skip", String((page - 1) * limit));
+        params.set("limit", String(limit));
+
         const qs = params.toString() ? `?${params.toString()}` : "";
 
         api.get(`/articles/${qs}`)
             .then((res) => {
-                setItems(res.data);
+                setItems(res.data.items);
+                setTotalItems(res.data.total);
                 setLoading(false);
             })
             .catch((err) => {
@@ -83,7 +94,7 @@ export const HomePage = () => {
                 setError("Failed to fetch articles from API.");
                 setLoading(false);
             });
-    }, [selectedCategory, debouncedSearch]);
+    }, [selectedCategory, debouncedSearch, page]);
 
     useEffect(() => {
         fetchArticles();
@@ -93,6 +104,8 @@ export const HomePage = () => {
         if (!categoryId) return null;
         return categories.find((c) => c.id === categoryId)?.name || null;
     };
+
+    const totalPages = Math.ceil(totalItems / limit);
 
     return (
         <div className="min-h-screen bg-background flex flex-col items-center p-4 pt-24 gap-6 page-enter">
@@ -142,7 +155,10 @@ export const HomePage = () => {
                                     : "outline"
                             }
                             size="sm"
-                            onClick={() => setSelectedCategory(null)}
+                            onClick={() => {
+                                setSelectedCategory(null);
+                                setPage(1);
+                            }}
                             className="transition-all-smooth hover:scale-105"
                         >
                             {t("home.all_categories")}
@@ -156,7 +172,10 @@ export const HomePage = () => {
                                         : "outline"
                                 }
                                 size="sm"
-                                onClick={() => setSelectedCategory(cat.id)}
+                                onClick={() => {
+                                    setSelectedCategory(cat.id);
+                                    setPage(1);
+                                }}
                                 className="transition-all-smooth hover:scale-105"
                             >
                                 {cat.name}
@@ -223,8 +242,7 @@ export const HomePage = () => {
                 {!loading && items.length > 0 && (
                     <>
                         <p className="text-sm text-muted-foreground mb-4 animate-fade-in">
-                            {items.length} item{items.length !== 1 ? "s" : ""}{" "}
-                            found
+                            {totalItems} item{totalItems !== 1 ? "s" : ""} found
                             {debouncedSearch ? ` for "${debouncedSearch}"` : ""}
                             {selectedCategory
                                 ? ` in ${getCategoryName(selectedCategory) || "category"}`
@@ -295,6 +313,35 @@ export const HomePage = () => {
                                 </Link>
                             ))}
                         </div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-4 mt-8 animate-fade-in-up">
+                                <Button
+                                    variant="outline"
+                                    disabled={page === 1}
+                                    onClick={() =>
+                                        setPage((p) => Math.max(1, p - 1))
+                                    }
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-sm font-medium">
+                                    Page {page} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    disabled={page >= totalPages}
+                                    onClick={() =>
+                                        setPage((p) =>
+                                            Math.min(totalPages, p + 1),
+                                        )
+                                    }
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

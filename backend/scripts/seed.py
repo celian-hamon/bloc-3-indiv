@@ -5,12 +5,13 @@ import sys
 # Add the backend directory to the sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from sqlalchemy.future import select
+
 from app.core.security import get_password_hash
 from app.db.session import AsyncSessionLocal, Base, engine
 from app.models.category import Category
 from app.models.item import Article
 from app.models.user import User
-from sqlalchemy.future import select
 
 
 async def seed():
@@ -95,8 +96,8 @@ async def seed():
         session.add_all(items)
         await session.commit()
 
-        print(f"Database seeded successfully!")
-        print(f"  - 1 admin user (admin@celianhamon.fr / password123)")
+        print("Database seeded successfully!")
+        print("  - 1 admin user (admin@celianhamon.fr / password123)")
         print(f"  - {len(category_objects)} categories")
         print(f"  - {len(items)} sample articles")
 
